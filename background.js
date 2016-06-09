@@ -6,7 +6,6 @@ defaultOptions = ({ "button":    2,
                     "scaling":   1,
                     "speed":     6000,
                     "friction":  10,
-                    "cursor":    true,
                     "notext":    false,
                     "debug":     false,
                   });

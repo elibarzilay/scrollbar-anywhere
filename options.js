@@ -1,20 +1,16 @@
 var KEYS = ["shift","ctrl","alt","meta"];
 
-function $(id) { return document.getElementById(id); }
+var $ = document.getElementById.bind(document);
 
 function error(msg) {
     $("message").innerHTML += "<div style='color:red;'>"+msg+"</div>";
-}
-
-function clearMessage() {
-    $("message").innerHTML = "";
 }
 
 function save() {
     var x;
     var o = {};
 
-    clearMessage();
+    $("message").innerHTML = "";
 
     x = $("button").selectedIndex;
     if (x < 0 || x > 2) error("Somehow, you broke the button field");
@@ -36,7 +32,6 @@ function save() {
         o["key_"+KEYS[i]] = $("key_"+KEYS[i]).checked;
     }
 
-    o.cursor = $("cursor").checked;
     o.notext = $("notext").checked;
     o.debug = $("debug").checked;
 
@@ -56,27 +51,20 @@ function load() {
     $("speed").value    = o.speed;
     $("friction").value = o.friction;
 
-    $("cursor").checked = (o.cursor == "true");
     $("notext").checked = (o.notext == "true");
     $("debug").checked = (o.debug == "true");
 }
 
-var updateTimeoutId
+var updateTimeoutId;
 
 function onUpdate(ev) {
     if (updateTimeoutId != null) clearTimeout(updateTimeoutId);
     updateTimeoutId = setTimeout(save,200);
-
-    $("windows_middle_warning").style.display =
-        ($("button").selectedIndex == 1 &&
-          navigator.userAgent.search(/Windows/) != -1 &&
-          navigator.userAgent.search(/Chrome\/[012345]\./) != -1)
-        ? "block" : "none";
 }
 
 document.addEventListener("DOMContentLoaded", ev => {
     load();
-    ["button","cursor","notext","debug"].forEach(id =>
+    ["button","notext","debug"].forEach(id =>
         $(id).addEventListener("change",onUpdate,false));
 
     KEYS.forEach(key => $("key_"+key).addEventListener("change",onUpdate,false));
@@ -87,6 +75,21 @@ document.addEventListener("DOMContentLoaded", ev => {
         $(id).addEventListener("mousedown", onUpdate, true);
         $(id).addEventListener("blur",      onUpdate, true);
     });
+    (function() {
+        var footerText = ["Here's a bunch of text to scroll:",""], beers = 99;
+        function bottles(n, text) {
+            footerText.push((n==0 ? "no more" : n)+" bottle"+(n==1?"":"s")
+                            + " of beer"+text);
+        }
+        while (beers > 0) {
+            bottles(beers," on the wall,");
+            bottles(beers,"!");
+            footerText.push("Take one down, pass it around");
+            bottles(--beers," on the wall!");
+            footerText.push("");
+        }
+        $("long_footer").innerHTML = footerText.join("<br>");
+    })();
 }, true);
 
 document.addEventListener("unload", save, true);

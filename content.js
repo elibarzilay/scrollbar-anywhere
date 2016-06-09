@@ -8,7 +8,6 @@ ScrollbarAnywhere = (() => {
     port.onMessage.addListener(msg => {
         if (!msg.saveOptions) return;
         options = msg.saveOptions;
-        options.cursor = (options.cursor == "true");
         options.notext = (options.notext == "true");
         options.debug  = (options.debug == "true");
         debug("saveOptions: ",options);
@@ -496,18 +495,14 @@ ScrollbarAnywhere = (() => {
     function startDrag(ev) {
         debug("drag start");
         activity = DRAG;
-        if (options.cursor) {
-            document.body.style.cursor = "-webkit-grabbing";
-            document.body.style.cursor = "-moz-grabbing";
-            document.body.style.cursor = "grabbing";
-        }
+        document.body.style.cursor = "-webkit-grabbing";
         Scroll.start(dragElement);
         return updateDrag(ev);
     }
 
     function stopDrag(ev) {
         debug("drag stop");
-        if (options.cursor) document.body.style.cursor = "auto";
+        document.body.style.cursor = "auto";
         Clipboard.unblockPaste();
         ScrollFix.hide();
         if (updateDrag(ev)) {
@@ -580,7 +575,7 @@ ScrollbarAnywhere = (() => {
 
         default:
             debug("WARNING: illegal activity for mousedown: "+ACTIVITIES[activity]);
-            if (options.cursor) document.body.style.cursor = "auto";
+            document.body.style.cursor = "auto";
             Clipboard.unblockPaste();
             ScrollFix.hide();
             activity = STOP;
