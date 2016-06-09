@@ -1,14 +1,16 @@
-var KEYS = ["shift","ctrl","alt","meta"];
+"use strict";
 
-var $ = document.getElementById.bind(document);
+let KEYS = ["shift","ctrl","alt","meta"];
+
+let $ = document.getElementById.bind(document);
 
 function error(msg) {
     $("message").innerHTML += "<div style='color:red;'>"+msg+"</div>";
 }
 
 function save() {
-    var x;
-    var o = {};
+    let x;
+    let o = {};
 
     $("message").innerHTML = "";
 
@@ -28,7 +30,7 @@ function save() {
     if (isNaN(x) || x < 0) error("Friction must be a positive number");
     else o.friction = x;
 
-    for (var i = 0; i < KEYS.length; i++) {
+    for (let i = 0; i < KEYS.length; i++) {
         o["key_"+KEYS[i]] = $("key_"+KEYS[i]).checked;
     }
 
@@ -39,11 +41,11 @@ function save() {
 }
 
 function load() {
-    var o = chrome.extension.getBackgroundPage().loadOptions();
+    let o = chrome.extension.getBackgroundPage().loadOptions();
 
     $("button").selectedIndex = o.button;
 
-    for (var i = 0; i < KEYS.length; i++) {
+    for (let i = 0; i < KEYS.length; i++) {
         $("key_"+KEYS[i]).checked = (o["key_"+KEYS[i]]+"" == "true");
     }
 
@@ -55,7 +57,7 @@ function load() {
     $("debug").checked = (o.debug == "true");
 }
 
-var updateTimeoutId;
+let updateTimeoutId;
 
 function onUpdate(ev) {
     if (updateTimeoutId != null) clearTimeout(updateTimeoutId);
@@ -76,7 +78,8 @@ document.addEventListener("DOMContentLoaded", ev => {
         $(id).addEventListener("blur",      onUpdate, true);
     });
     (() => {
-        var footerText = ["Here's a bunch of text to scroll:",""], beers = 99;
+        let footerText = ["<i>Here's a bunch of text to scroll:</i>",""];
+        let beers = 99;
         function bottles(n, text) {
             footerText.push((n==0 ? "no more" : n)+" bottle"+(n==1?"":"s")
                             + " of beer"+text);
@@ -85,7 +88,7 @@ document.addEventListener("DOMContentLoaded", ev => {
             bottles(beers," on the wall,");
             bottles(beers,"!");
             footerText.push("Take one down, pass it around");
-            bottles(--beers," on the wall!");
+            bottles(--beers," on the wall.");
             footerText.push("");
         }
         $("long_footer").innerHTML = footerText.join("<br>");

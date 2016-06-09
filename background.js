@@ -1,30 +1,27 @@
-defaultOptions = ({ "button":    2,
-                    "key_shift": false,
-                    "key_ctrl":  false,
-                    "key_alt":   false,
-                    "key_meta":  false,
-                    "scaling":   1,
-                    "speed":     6000,
-                    "friction":  10,
-                    "notext":    false,
-                    "debug":     false,
-                  });
+"use strict";
 
-for (var k in defaultOptions)
+let defaultOptions = ({
+    button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
+    scaling: 1, speed: 6000, friction: 10,
+    notext: false,
+    debug: false
+});
+
+for (let k in defaultOptions)
     if (typeof localStorage[k] == "undefined")
         localStorage[k] = defaultOptions[k];
 
 function loadOptions() {
-    var o = {};
-    for (var k in defaultOptions) o[k] = localStorage[k];
+    let o = {};
+    for (let k in defaultOptions) o[k] = localStorage[k];
     return o;
 }
 
-clients = {};
+let clients = {};
 
 chrome.extension.onConnect.addListener(port => {
     port.postMessage({ saveOptions: localStorage });
-    var id = port.portId_;
+    let id = port.portId_;
     console.log("connect: "+id);
     clients[id] = port;
     port.onDisconnect.addListener(() => {
@@ -34,9 +31,9 @@ chrome.extension.onConnect.addListener(port => {
 });
 
 function saveOptions(o) {
-    for (var k in o)
+    for (let k in o)
         localStorage[k] = o[k];
-    for (var id in clients)
+    for (let id in clients)
         clients[id].postMessage({ saveOptions: localStorage });
 }
 

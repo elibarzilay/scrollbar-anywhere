@@ -1,10 +1,12 @@
+"use strict";
+
 (() => {
 
 // === Options ===
 
-var options = {debug: true};
+let options = {debug: true};
 
-var port = chrome.extension.connect();
+let port = chrome.extension.connect();
 port.onMessage.addListener(msg => {
     if (!msg.saveOptions) return;
     options = msg.saveOptions;
@@ -13,65 +15,31 @@ port.onMessage.addListener(msg => {
     debug("saveOptions: ",options);
 });
 
-// === Debuggering ===
+// === Debugging ===
 
-function debug() {
-    if (options.debug) {
-        console.debug.apply(
-            console,
-            ["SA:"].concat(Array.prototype.slice.call(arguments)));
-    }
-}
-
-const DEBUG_INTERVAL = 100;
-var lastDebug = 0;
-
-function debugCont() {
-    if (options.debug) {
-        var now = Date.now();
-        if (lastDebug+DEBUG_INTERVAL <= now) {
-            lastDebug = now;
-            debug.apply(this,arguments);
-        }
-    }
-}
-
-// === Util ===
-
-String.prototype.padLeft = function(n,c) {
-    if (!c) c = " ";
-    var a = [];
-    for (var i = this.length; i < n; i++) a.push(c);
-    a.push(this);
-    return a.join("");
-}
-
-function formatCoord(n) {
-    return new Number(n).toFixed(3).padLeft(8);
-}
-
-function formatVector(v) {
-    return "["+formatCoord(v[0])+","+formatCoord(v[1])+"]";
+function debug(str, ...args) {
+    if (!options.debug) return;
+    console.debug("SA: "+str, ...args);
 }
 
 // === Vector math ===
 
-var vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
-var vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
-var vmul  = (s,v) => [s*v[0], s*v[1]];
-var vdiv  = (s,v) => [v[0]/s, v[1]/s];
-var vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
-var vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
-var vunit = (v)   => vdiv(vmag(v),v);
+let vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
+let vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
+let vmul  = (s,v) => [s*v[0], s*v[1]];
+let vdiv  = (s,v) => [v[0]/s, v[1]/s];
+let vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
+let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+let vunit = (v)   => vdiv(vmag(v),v);
 
 // Test if the given point is directly over text
-var isOverText = (() => {
-    var bonet = document.createElement("SPAN");
+let isOverText = (() => {
+    let bonet = document.createElement("SPAN");
     return (ev) => {
-        var mommy = ev.target;
+        let mommy = ev.target;
         if (mommy == null) return false;
-        for (var i = 0; i < mommy.childNodes.length; i++) {
-            var baby = mommy.childNodes[i];
+        for (let i = 0; i < mommy.childNodes.length; i++) {
+            let baby = mommy.childNodes[i];
             if (baby.nodeType == Node.TEXT_NODE && baby.textContent.search(/\S/) != -1) {
                 // debug("TEXT_NODE: '"+baby.textContent+"'")
                 try {
@@ -92,11 +60,11 @@ var isOverText = (() => {
 // The body element is treated separately since the visible size is
 // fetched differently depending on the doctype.
 function isOverScrollbar(ev) {
-    var t = ev.target == document.documentElement ? document.body : ev.target;
+    let t = ev.target == document.documentElement ? document.body : ev.target;
     if (t == document.body) {
-        var d = document.documentElement;
-        var clientWidth;
-        var clientHeight;
+        let d = document.documentElement;
+        let clientWidth;
+        let clientHeight;
         if (d.scrollHeight == d.clientHeight &&
             d.scrollHeight == d.offsetHeight) {
             // Guessing it's a no doctype document
@@ -118,7 +86,7 @@ function isOverScrollbar(ev) {
 // That is, is the scroll size greater than the client size
 // and the CSS overflow set to scroll or auto?
 function isScrollable(e) {
-    var o;
+    let o;
     if (e.scrollWidth > e.clientWidth) {
         o = document.defaultView.getComputedStyle(e)["overflow-x"];
         if (o == "auto" || o == "scroll") return true;
@@ -132,35 +100,38 @@ function isScrollable(e) {
 
 // Return the first ancestor (or the element itself) that is scrollable
 function findInnermostScrollable(e) {
-    if (e == document.documentElement) return document.body;
-    if (e == null || e == document.body || isScrollable(e)) return e;
-    else return arguments.callee(e.parentNode);
+    while (true) {
+        if (e == document.documentElement) return document.body;
+        if (e == null || e == document.body || isScrollable(e)) return e;
+        e = e.parentNode;
+    }
 }
 
 // Don't drag when left-clicking on these elements
-const LBUTTON_OVERRIDE_TAGS = ["A","INPUT","SELECT","TEXTAREA","BUTTON","LABEL","OBJECT","EMBED"]
-const MBUTTON_OVERRIDE_TAGS = ["A"]
-const RBUTTON_OVERRIDE_TAGS = ["A","INPUT","TEXTAREA","OBJECT","EMBED"]
+const LBUTTON_OVERRIDE_TAGS = ["A","INPUT","SELECT","TEXTAREA","BUTTON","LABEL","OBJECT","EMBED"];
+const MBUTTON_OVERRIDE_TAGS = ["A"];
+const RBUTTON_OVERRIDE_TAGS = ["A","INPUT","TEXTAREA","OBJECT","EMBED"];
 function hasOverrideAncestor(e) {
-    if (e == null) return false;
-    if (options.button == LBUTTON && shouldOverrideLeftButton(e)) return true;
-    if (options.button == MBUTTON && MBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName)) return true;
-    if (options.button == RBUTTON && RBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName)) return true;
-    return arguments.callee(e.parentNode);
-}
-
-function shouldOverrideLeftButton(e) {
-    return LBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName) || hasRoleButtonAttribute(e);
+    while (e != null) {
+        if (options.button == LBUTTON ? (LBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
+                                         || hasRoleButtonAttribute(e))
+            : options.button == MBUTTON ? MBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
+            : options.button == RBUTTON ? RBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
+            : false)
+            return true;
+        e = e.parentNode;
+    }
+    return false;
 }
 
 function hasRoleButtonAttribute(e) {
-    if (e.attributes && e.attributes.role) return e.attributes.role.value === "button";
-    else return false;
+    return e.attributes && e.attributes.role &&
+           e.attributes.role.value === "button";
 }
 
 // === Clipboard Stuff ===
-var Clipboard = (() => {
-    var blockElement = null;
+let Clipboard = (() => {
+    let blockElement = null;
 
     function isPastable(e) {
         return e && e.tagName == "INPUT" || e.tagName == "TEXTAREA";
@@ -169,7 +140,7 @@ var Clipboard = (() => {
     // Block the next paste event if a text element is active. This is a
     // workaround for middle-click paste not being preventable on Linux.
     function blockPaste() {
-        var e = document.activeElement;
+        let e = document.activeElement;
         if (blockElement != e) {
             if (blockElement) unblockPaste();
             if (isPastable(e)) {
@@ -189,20 +160,20 @@ var Clipboard = (() => {
     }
 
     function onPaste(ev) {
-        var e = ev.target;
+        let e = ev.target;
         if (!e) return;
         if (blockElement == e) {
             blockElement = null;
             ev.preventDefault();
         }
-        e.removeEventListener("paste",arguments.callee,true);
+        e.removeEventListener("paste", onPaste, true);
     }
     return ({ blockPaste, unblockPaste });
 })();
 
 // === Scrollfix hack ===
-var ScrollFix = (() => {
-    var scrollFixElement = null;
+let ScrollFix = (() => {
+    let scrollFixElement = null;
 
     function createScrollFix() {
         scrollFixElement = document.createElement("div");
@@ -232,14 +203,14 @@ var ScrollFix = (() => {
 
 // === Fake Selection ===
 
-var Selector = (() => {
+let Selector = (() => {
 
-    var startRange = null;
+    let startRange = null;
 
     function start(x,y) {
         debug("Selector.start("+x+","+y+")");
         startRange = document.caretRangeFromPoint(x,y);
-        var s = getSelection();
+        let s = getSelection();
         s.removeAllRanges();
         s.addRange(startRange);
     }
@@ -253,8 +224,8 @@ var Selector = (() => {
         else if (x >= innerWidth)  x = innerWidth-1;
 
         if (!startRange) start(x,y);
-        var a = startRange;
-        var b = document.caretRangeFromPoint(x,y);
+        let a = startRange;
+        let b = document.caretRangeFromPoint(x,y);
 
         if (b != null) {
             if (b.compareBoundaryPoints(Range.START_TO_START,a) > 0)
@@ -262,7 +233,7 @@ var Selector = (() => {
             else
                 b.setEnd(a.startContainer,a.startOffset);
 
-            var s = getSelection();
+            let s = getSelection();
             s.removeAllRanges();
             s.addRange(b);
         }
@@ -275,7 +246,7 @@ var Selector = (() => {
     }
 
     function scroll(ev) {
-        var y = ev.clientY;
+        let y = ev.clientY;
         if (y < 0) {
             scrollBy(0,y);
             return true;
@@ -291,18 +262,18 @@ var Selector = (() => {
 
 // === Motion ===
 
-var Motion = (() => {
+let Motion = (() => {
     const MIN_SPEED_SQUARED = 1;
     const FILTER_INTERVAL = 100;
-    var position = null;
-    var velocity = [0,0];
-    var updateTime = null;
-    var impulses = [];
+    let position = null;
+    let velocity = [0,0];
+    let updateTime = null;
+    let impulses = [];
 
     // ensure velocity is within min and max values
     // return if/not there is motion
     function clamp() {
-        var speedSquared = vmag2(velocity);
+        let speedSquared = vmag2(velocity);
         if (speedSquared <= MIN_SPEED_SQUARED) {
             velocity = [0,0];
             return false;
@@ -332,8 +303,8 @@ var Motion = (() => {
             velocity = [0,0];
             return false;
         } else {
-            var a = impulses[0];
-            var b = impulses[impulses.length-1];
+            let a = impulses[0];
+            let b = impulses[impulses.length-1];
             velocity = vdiv((b.time - a.time)/1000, vsub(b.pos,a.pos));
             return clamp();
         }
@@ -343,13 +314,13 @@ var Motion = (() => {
     // return if/not there is motion
     function glide(time) {
         impulses = [];
-        var moving;
+        let moving;
 
         if (updateTime == null) {
             moving = false;
         } else {
-            var deltaSeconds = (time-updateTime)/1000;
-            var frictionMultiplier = Math.max(1-(options.friction/FILTER_INTERVAL), 0);
+            let deltaSeconds = (time-updateTime)/1000;
+            let frictionMultiplier = Math.max(1-(options.friction/FILTER_INTERVAL), 0);
             frictionMultiplier = Math.pow(frictionMultiplier, deltaSeconds*FILTER_INTERVAL);
             velocity = vmul(frictionMultiplier, velocity);
             moving = clamp();
@@ -364,14 +335,14 @@ var Motion = (() => {
     return ({ stop, impulse, glide, getPosition });
 })();
 
-Scroll = (() => {
-    var scrolling = false;
-    var element;
-    var scrollOrigin;
-    var viewportSize;
-    var scrollSize;
-    var scrollListener;
-    var scrollMultiplier;
+let Scroll = (() => {
+    let scrolling = false;
+    let element;
+    let scrollOrigin;
+    let viewportSize;
+    let scrollSize;
+    let scrollListener;
+    let scrollMultiplier;
 
     // Return the size of the element as it appears in parent's layout
     function getViewportSize(el) {
@@ -403,8 +374,8 @@ Scroll = (() => {
     // boundary on both axes).
     function move(pos) {
         if (element) {
-            var x = element.scrollLeft;
-            var y = element.scrollTop;
+            let x = element.scrollLeft;
+            let y = element.scrollTop;
             try {
                 scrolling = true;
                 element.scrollLeft = scrollOrigin[0] + pos[0] * scrollMultiplier[0];
@@ -438,19 +409,19 @@ const TIME_STEP = 10;
 
 const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
 const ACTIVITIES = ["STOP","CLICK","DRAG","GLIDE"];
-for (var i = 0; i < ACTIVITIES.length; i++)
+for (let i = 0; i < ACTIVITIES.length; i++)
     window[ACTIVITIES[i]] = i;
 
-var activity = STOP;
-var blockContextMenu = false;
-var showScrollFix = false;
-var mouseOrigin = null;
-var dragElement = null;
+let activity = STOP;
+let blockContextMenu = false;
+let showScrollFix = false;
+let mouseOrigin = null;
+let dragElement = null;
 
 function updateGlide() {
     if (activity == GLIDE) {
         debug("glide update");
-        var moving = Motion.glide(performance.now());
+        let moving = Motion.glide(performance.now());
         moving = Scroll.move(vsub(Motion.getPosition(),mouseOrigin)) && moving;
         if (moving) setTimeout(updateGlide,TIME_STEP);
         else stopGlide();
@@ -466,8 +437,8 @@ function stopGlide() {
 
 function updateDrag(ev) {
     debug("drag update");
-    var v = [ev.clientX,ev.clientY];
-    var moving = false;
+    let v = [ev.clientX,ev.clientY];
+    let moving = false;
     if (v[0] && v[1]) {
         moving = Motion.impulse(v,ev.timeStamp);
         Scroll.move(vsub(v,mouseOrigin));
