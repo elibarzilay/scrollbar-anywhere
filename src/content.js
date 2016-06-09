@@ -1,20 +1,19 @@
-ScrollbarAnywhere = (function() {
+ScrollbarAnywhere = (() => {
 
     // === Options ===
 
     var options = {debug:true};
 
     var port = chrome.extension.connect()
-    port.onMessage.addListener(function(msg) {
-        if (msg.saveOptions) {
-            options = msg.saveOptions;
-            options.cursor = (options.cursor == "true");
-            options.notext = (options.notext == "true");
-            options.grab_and_drag = (options.grab_and_drag == "true");
-            options.debug = (options.debug == "true");
-            debug("saveOptions: ",options);
-        }
-    })
+    port.onMessage.addListener(msg => {
+        if (!msg.saveOptions) return;
+        options = msg.saveOptions;
+        options.cursor = (options.cursor == "true");
+        options.notext = (options.notext == "true");
+        options.grab_and_drag = (options.grab_and_drag == "true");
+        options.debug = (options.debug == "true");
+        debug("saveOptions: ",options);
+    });
 
     // === Debuggering ===
 
@@ -59,18 +58,18 @@ ScrollbarAnywhere = (function() {
 
     // === Vector math ===
 
-    function vadd(a,b) { return [a[0]+b[0], a[1]+b[1]] }
-    function vsub(a,b) { return [a[0]-b[0], a[1]-b[1]] }
-    function vmul(s,v) { return [s*v[0], s*v[1]] }
-    function vdiv(s,v) { return [v[0]/s, v[1]/s] }
-    function vmag2(v)  { return v[0]*v[0] + v[1]*v[1] }
-    function vmag(v)   { return Math.sqrt(v[0]*v[0] + v[1]*v[1]) }
-    function vunit(v)  { return vdiv(vmag(v),v) }
+    var vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
+    var vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
+    var vmul  = (s,v) => [s*v[0], s*v[1]];
+    var vdiv  = (s,v) => [v[0]/s, v[1]/s];
+    var vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
+    var vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+    var vunit = (v)   => vdiv(vmag(v),v);
 
     // Test if the given point is directly over text
-    var isOverText = (function() {
+    var isOverText = (() => {
         var bonet = document.createElement("SPAN");
-        return function(ev) {
+        return (ev) => {
             var mommy = ev.target;
             if (mommy == null) return false;
             for (var i = 0; i < mommy.childNodes.length; i++) {
@@ -158,23 +157,22 @@ ScrollbarAnywhere = (function() {
     function hasOverrideAncestor(e) {
         if (e == null) return false;
         if (options.button == LBUTTON && shouldOverrideLeftButton(e)) return true;
-        if (options.button == MBUTTON && MBUTTON_OVERRIDE_TAGS.some(function(tag) { return tag == e.tagName })) return true;
-        if (options.button == RBUTTON && RBUTTON_OVERRIDE_TAGS.some(function(tag) { return tag == e.tagName })) return true;
+        if (options.button == MBUTTON && MBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName)) return true;
+        if (options.button == RBUTTON && RBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName)) return true;
         return arguments.callee(e.parentNode);
     }
 
     function shouldOverrideLeftButton(e) {
-        return LBUTTON_OVERRIDE_TAGS.some(function(tag) { return tag == e.tagName; }) || hasRoleButtonAttribute(e);
+        return LBUTTON_OVERRIDE_TAGS.some(tag => tag == e.tagName) || hasRoleButtonAttribute(e);
     }
 
     function hasRoleButtonAttribute(e) {
-        if (e.attributes && e.attributes.role)
-            return e.attributes.role.value === 'button';
+        if (e.attributes && e.attributes.role) return e.attributes.role.value === 'button';
         else return false;
     }
 
     // === Clipboard Stuff ===
-    var Clipboard = (function(){
+    var Clipboard = (() => {
         var blockElement = null;
 
         function isPastable(e) {
@@ -212,12 +210,11 @@ ScrollbarAnywhere = (function() {
             }
             e.removeEventListener('paste',arguments.callee,true);
         }
-        return { blockPaste: blockPaste,
-                          unblockPaste: unblockPaste };
+        return ({ blockPaste, unblockPaste });
     })();
 
     // === Scrollfix hack ===
-    var ScrollFix = (function(){
+    var ScrollFix = (() => {
         var scrollFixElement = null;
 
         function createScrollFix() {
@@ -245,13 +242,12 @@ ScrollbarAnywhere = (function() {
                 scrollFixElement.parentNode.removeChild(scrollFixElement);
         }
 
-        return { show: show,
-                          hide: hide }
+        return ({ show, hide })
     })();
 
     // === Fake Selection ===
 
-    var Selector = (function(){
+    var Selector = (() => {
 
         var startRange = null;
 
@@ -305,15 +301,12 @@ ScrollbarAnywhere = (function() {
             return false;
         }
 
-        return { start: start,
-                          update: update,
-                          cancel: cancel,
-                          scroll: scroll };
+        return ({ start, update, cancel, scroll });
     })();
 
     // === Motion ===
 
-    var Motion = (function() {
+    var Motion = (() => {
         const MIN_SPEED_SQUARED = 1;
         const FILTER_INTERVAL = 100;
         var position = null;
@@ -384,13 +377,10 @@ ScrollbarAnywhere = (function() {
 
         function getPosition() { return position }
 
-        return { stop: stop,
-                          impulse: impulse,
-                          glide: glide,
-                          getPosition: getPosition }
+        return ({ stop, impulse, glide, getPosition });
     })();
 
-    Scroll = (function() {
+    Scroll = (() => {
         var scrolling = false;
         var element;
         var scrollOrigin;
@@ -448,22 +438,18 @@ ScrollbarAnywhere = (function() {
 
         // Stop dragging
         function stop() {
-            if (element) {
-                element = null;
-                viewportSize = null;
-                scrollSize = null;
-                scrollOrigin = null;
-            }
+            if (!element) return;
+            element = null;
+            viewportSize = null;
+            scrollSize = null;
+            scrollOrigin = null;
         }
 
         function listen(fn) {
             scrollListener = fn;
         }
 
-        return { start: start,
-                          move: move,
-                          stop: stop,
-                          listen: listen }
+        return ({ start, move, stop, listen });
     })();
 
     const LBUTTON=0, MBUTTON=1, RBUTTON=2;
@@ -555,7 +541,7 @@ ScrollbarAnywhere = (function() {
                 break;
             }
 
-            if (!KEYS.every(function(key) { return (options['key_'+key]+'' == 'true') == ev[key+"Key"] })) {
+            if (!KEYS.every(key => (options['key_'+key]+'' == 'true') == ev[key+"Key"])) {
                 debug("wrong modkeys, ignoring");
                 break;
             }
@@ -695,15 +681,15 @@ ScrollbarAnywhere = (function() {
         }
     }
 
-    return {
-        init: function() {
+    return ({
+        init: () => {
             addEventListener("mousedown",     onMouseDown,   true);
             addEventListener("mouseup",       onMouseUp,     true);
             addEventListener("mousemove",     onMouseMove,   true);
             addEventListener("mouseout",      onMouseOut,    true);
             addEventListener("contextmenu",   onContextMenu, true);
         }
-    }
+    })
 
 })();
 

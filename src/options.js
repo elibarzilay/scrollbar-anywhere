@@ -76,22 +76,19 @@ function onUpdate(ev) {
         ? 'block' : 'none';
 }
 
-document.addEventListener('DOMContentLoaded', function(ev) {
+document.addEventListener('DOMContentLoaded', ev => {
     load();
-    ['button','cursor','notext','debug', 'grab_and_drag'].forEach(function(id) {
-        $(id).addEventListener('change',onUpdate,false);
-    })
+    ['button','cursor','notext','debug', 'grab_and_drag'].forEach(id =>
+        $(id).addEventListener('change',onUpdate,false));
 
-    KEYS.forEach(function(key) {
-        $('key_'+key).addEventListener('change',onUpdate,false);
-    })
+    KEYS.forEach(key => $('key_'+key).addEventListener('change',onUpdate,false));
 
-    ['scaling','speed','friction'].forEach(function(id) {
+    ['scaling','speed','friction'].forEach(id => {
         $(id).addEventListener('change',onUpdate,true);
         $(id).addEventListener('keydown',onUpdate,true);
         $(id).addEventListener('mousedown',onUpdate,true);
         $(id).addEventListener('blur',onUpdate,true);
-    })
-},true);
+    });
+}, true);
 
 document.addEventListener('unload',save,true);

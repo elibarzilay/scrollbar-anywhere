@@ -1,16 +1,16 @@
-defaultOptions = { "button":    2,
-                   "key_shift": false,
-                   "key_ctrl":  false,
-                   "key_alt":   false,
-                   "key_meta":  false,
-                   "scaling":   1,
-                   "speed":     6000,
-                   "friction":  10,
-                   "cursor":    true,
-                   "notext":    false,
-                   "grab_and_drag": false,
-                   "debug":     false,
-                 };
+defaultOptions = ({ "button":    2,
+                    "key_shift": false,
+                    "key_ctrl":  false,
+                    "key_alt":   false,
+                    "key_meta":  false,
+                    "scaling":   1,
+                    "speed":     6000,
+                    "friction":  10,
+                    "cursor":    true,
+                    "notext":    false,
+                    "grab_and_drag": false,
+                    "debug":     false,
+                  });
 
 for (var k in defaultOptions)
     if (typeof localStorage[k] == 'undefined')
@@ -24,16 +24,16 @@ function loadOptions() {
 
 clients = {};
 
-chrome.extension.onConnect.addListener(function(port) {
+chrome.extension.onConnect.addListener(port => {
     port.postMessage({ saveOptions: localStorage });
     var id = port.portId_;
     console.log("connect: "+id);
     clients[id] = port;
-    port.onDisconnect.addListener(function() {
+    port.onDisconnect.addListener(() => {
         console.log("disconnect: "+id);
         delete clients[id];
     });
-})
+});
 
 function saveOptions(o) {
     for (var k in o)
@@ -47,9 +47,9 @@ function saveOptions(o) {
 //  "permissions": ["tabs"]
 // in manifest.json
 /*
-chrome.windows.getAll({populate:true}, function(wins) {
-    wins.forEach(function(win) {
-        win.tabs.forEach(function(tab) {
+chrome.windows.getAll({populate:true}, wins => {
+    wins.forEach(win => {
+        win.tabs.forEach(tab => {
             chrome.tabs.executeScript(tab.id,{file:"content.js",allFrames:true});
         })
     })
