@@ -13,7 +13,7 @@ defaultOptions = ({ "button":    2,
                   });
 
 for (var k in defaultOptions)
-    if (typeof localStorage[k] == 'undefined')
+    if (typeof localStorage[k] == "undefined")
         localStorage[k] = defaultOptions[k];
 
 function loadOptions() {

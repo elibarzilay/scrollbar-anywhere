@@ -41,11 +41,11 @@ ScrollbarAnywhere = (() => {
     // === Util ===
 
     String.prototype.padLeft = function(n,c) {
-        if (!c) c = ' ';
+        if (!c) c = " ";
         var a = [];
         for (var i = this.length; i < n; i++) a.push(c);
         a.push(this);
-        return a.join('');
+        return a.join("");
     }
 
     function formatCoord(n) {
@@ -151,9 +151,9 @@ ScrollbarAnywhere = (() => {
     }
 
     // Don't drag when left-clicking on these elements
-    const LBUTTON_OVERRIDE_TAGS = ['A','INPUT','SELECT','TEXTAREA','BUTTON','LABEL','OBJECT','EMBED']
-    const MBUTTON_OVERRIDE_TAGS = ['A']
-    const RBUTTON_OVERRIDE_TAGS = ['A','INPUT','TEXTAREA','OBJECT','EMBED']
+    const LBUTTON_OVERRIDE_TAGS = ["A","INPUT","SELECT","TEXTAREA","BUTTON","LABEL","OBJECT","EMBED"]
+    const MBUTTON_OVERRIDE_TAGS = ["A"]
+    const RBUTTON_OVERRIDE_TAGS = ["A","INPUT","TEXTAREA","OBJECT","EMBED"]
     function hasOverrideAncestor(e) {
         if (e == null) return false;
         if (options.button == LBUTTON && shouldOverrideLeftButton(e)) return true;
@@ -167,7 +167,7 @@ ScrollbarAnywhere = (() => {
     }
 
     function hasRoleButtonAttribute(e) {
-        if (e.attributes && e.attributes.role) return e.attributes.role.value === 'button';
+        if (e.attributes && e.attributes.role) return e.attributes.role.value === "button";
         else return false;
     }
 
@@ -176,7 +176,7 @@ ScrollbarAnywhere = (() => {
         var blockElement = null;
 
         function isPastable(e) {
-            return e && e.tagName == 'INPUT' || e.tagName == 'TEXTAREA';
+            return e && e.tagName == "INPUT" || e.tagName == "TEXTAREA";
         }
 
         // Block the next paste event if a text element is active. This is a
@@ -188,7 +188,7 @@ ScrollbarAnywhere = (() => {
                 if (isPastable(e)) {
                     debug("blocking paste for active text element", e);
                     blockElement = e;
-                    e.addEventListener('paste',onPaste,true);
+                    e.addEventListener("paste",onPaste,true);
                 }
             }
         }
@@ -196,7 +196,7 @@ ScrollbarAnywhere = (() => {
         function unblockPaste() {
             if (blockElement) {
                 debug("unblocking paste", blockElement);
-                blockElement.removeEventListener('paste',onPaste,true);
+                blockElement.removeEventListener("paste",onPaste,true);
                 blockElement = null;
             }
         }
@@ -208,7 +208,7 @@ ScrollbarAnywhere = (() => {
                 blockElement = null;
                 ev.preventDefault();
             }
-            e.removeEventListener('paste',arguments.callee,true);
+            e.removeEventListener("paste",arguments.callee,true);
         }
         return ({ blockPaste, unblockPaste });
     })();
@@ -218,16 +218,16 @@ ScrollbarAnywhere = (() => {
         var scrollFixElement = null;
 
         function createScrollFix() {
-            scrollFixElement = document.createElement('div');
-            scrollFixElement.setAttribute('style', 'background: transparent none !important');
-            scrollFixElement.style.position = 'fixed';
+            scrollFixElement = document.createElement("div");
+            scrollFixElement.setAttribute("style", "background: transparent none !important");
+            scrollFixElement.style.position = "fixed";
             scrollFixElement.style.top=0;
             scrollFixElement.style.right=0;
             scrollFixElement.style.bottom=0;
             scrollFixElement.style.left=0;
             scrollFixElement.style.zIndex=99999999;
-            scrollFixElement.style.display='block';
-            //scrollFixElement.style.borderRight='5px solid rgba(0,0,0,0.04)';
+            scrollFixElement.style.display="block";
+            //scrollFixElement.style.borderRight="5px solid rgba(0,0,0,0.04)";
         }
 
         function show() {
@@ -541,7 +541,7 @@ ScrollbarAnywhere = (() => {
                 break;
             }
 
-            if (!KEYS.every(key => (options['key_'+key]+'' == 'true') == ev[key+"Key"])) {
+            if (!KEYS.every(key => (options["key_"+key]+"" == "true") == ev[key+"Key"])) {
                 debug("wrong modkeys, ignoring");
                 break;
             }
