@@ -1,7 +1,7 @@
 {
-    "name": "Scrollbar Anywhere",
-    "version": "2.9",
-    "description": "Click and drag anywhere to scroll the page.",
+    "name": "Drag to Scroll",
+    "version": "1.0",
+    "description": "Drag the mouse to scroll the page.",
     "icons": {"128": "icon.png"},
     "content_scripts": [{
         "matches": ["<all_urls>"],

@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", ev => {
         $(id).addEventListener("mousedown", onUpdate, true);
         $(id).addEventListener("blur",      onUpdate, true);
     });
-    (function() {
+    (() => {
         var footerText = ["Here's a bunch of text to scroll:",""], beers = 99;
         function bottles(n, text) {
             footerText.push((n==0 ? "no more" : n)+" bottle"+(n==1?"":"s")
