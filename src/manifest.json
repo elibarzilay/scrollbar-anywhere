@@ -2,12 +2,7 @@
   "name": "Scrollbar Anywhere",
   "version": "2.9",
   "description": "Click and drag anywhere to scroll the page.",
-  "icons": {
-    "128": "icon128.png",
-    "48": "icon48.png",
-    "32": "icon32.png",
-    "16": "icon16.png"
-  },
+  "icons": { "128": "icon128.png" },
   "content_scripts": [
     {
       "matches": [
