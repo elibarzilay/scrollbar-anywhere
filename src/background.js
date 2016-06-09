@@ -10,40 +10,34 @@ defaultOptions = { "button":    2,
                    "notext":    false,
                    "grab_and_drag": false,
                    "debug":     false,
-                 }
+                 };
 
 for (var k in defaultOptions)
   if (typeof localStorage[k] == 'undefined')
-    localStorage[k] = defaultOptions[k]
-
+    localStorage[k] = defaultOptions[k];
 
 function loadOptions() {
-  var o = {}
-  for (var k in defaultOptions) o[k] = localStorage[k]
-  return o
+  var o = {};
+  for (var k in defaultOptions) o[k] = localStorage[k];
+  return o;
 }
 
-clients = {}
+clients = {};
 
 chrome.extension.onConnect.addListener(function(port) {
-  port.postMessage({ saveOptions: localStorage })
-  var id = port.portId_
-  console.log("connect: "+id)
-  clients[id] = port
+  port.postMessage({ saveOptions: localStorage });
+  var id = port.portId_;
+  console.log("connect: "+id);
+  clients[id] = port;
   port.onDisconnect.addListener(function() {
-    console.log("disconnect: "+id)
-    delete clients[id]
-  })
+    console.log("disconnect: "+id);
+    delete clients[id];
+  });
 })
 
 function saveOptions(o) {
-  for (var k in o) {
-    localStorage[k] = o[k]
-  }
-
-  for (var id in clients) {
-    clients[id].postMessage({ saveOptions: localStorage })
-  }
+  for (var k in o) localStorage[k] = o[k];
+  for (var id in clients) clients[id].postMessage({ saveOptions: localStorage });
 }
 
 // Inject content script into all existing tabs (doesn't work)
