@@ -4,16 +4,19 @@
 
 // === Options ===
 
-let options = {debug: true};
-
-let port = chrome.extension.connect();
-port.onMessage.addListener(msg => {
-    if (!msg.saveOptions) return;
-    options = msg.saveOptions;
-    options.notext = (options.notext == "true");
-    options.debug  = (options.debug == "true");
-    debug("saveOptions: ",options);
+let options = ({ // default
+    button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
+    scaling: 1, speed: 6000, friction: 10,
+    notext: false,
+    debug: false
 });
+
+function setOptions(o) {
+    if (o) { Object.assign(options, o); debug("Options: %o", options); }
+}
+chrome.storage.onChanged.addListener((changes, _) =>
+    setOptions(changes.options && changes.options.newValue));
+chrome.storage.sync.get("options", val => setOptions(val && val.options));
 
 // === Debugging ===
 
