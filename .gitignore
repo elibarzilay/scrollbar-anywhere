@@ -1,5 +1,0 @@
-key.pem
-build/*
-/build
-.settings
-node_modules/
