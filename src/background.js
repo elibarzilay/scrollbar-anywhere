@@ -13,31 +13,33 @@ defaultOptions = { "button":    2,
                  };
 
 for (var k in defaultOptions)
-  if (typeof localStorage[k] == 'undefined')
-    localStorage[k] = defaultOptions[k];
+    if (typeof localStorage[k] == 'undefined')
+        localStorage[k] = defaultOptions[k];
 
 function loadOptions() {
-  var o = {};
-  for (var k in defaultOptions) o[k] = localStorage[k];
-  return o;
+    var o = {};
+    for (var k in defaultOptions) o[k] = localStorage[k];
+    return o;
 }
 
 clients = {};
 
 chrome.extension.onConnect.addListener(function(port) {
-  port.postMessage({ saveOptions: localStorage });
-  var id = port.portId_;
-  console.log("connect: "+id);
-  clients[id] = port;
-  port.onDisconnect.addListener(function() {
-    console.log("disconnect: "+id);
-    delete clients[id];
-  });
+    port.postMessage({ saveOptions: localStorage });
+    var id = port.portId_;
+    console.log("connect: "+id);
+    clients[id] = port;
+    port.onDisconnect.addListener(function() {
+        console.log("disconnect: "+id);
+        delete clients[id];
+    });
 })
 
 function saveOptions(o) {
-  for (var k in o) localStorage[k] = o[k];
-  for (var id in clients) clients[id].postMessage({ saveOptions: localStorage });
+    for (var k in o)
+        localStorage[k] = o[k];
+    for (var id in clients)
+        clients[id].postMessage({ saveOptions: localStorage });
 }
 
 // Inject content script into all existing tabs (doesn't work)
@@ -46,10 +48,10 @@ function saveOptions(o) {
 // in manifest.json
 /*
 chrome.windows.getAll({populate:true}, function(wins) {
-  wins.forEach(function(win) {
-    win.tabs.forEach(function(tab) {
-      chrome.tabs.executeScript(tab.id,{file:"content.js",allFrames:true});
+    wins.forEach(function(win) {
+        win.tabs.forEach(function(tab) {
+            chrome.tabs.executeScript(tab.id,{file:"content.js",allFrames:true});
+        })
     })
-  })
 })
 */
