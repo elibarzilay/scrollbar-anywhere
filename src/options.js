@@ -38,7 +38,6 @@ function save() {
 
     o.cursor = $("cursor").checked;
     o.notext = $("notext").checked;
-    o.grab_and_drag = $("grab_and_drag").checked;
     o.debug = $("debug").checked;
 
     chrome.extension.getBackgroundPage().saveOptions(o);
@@ -59,7 +58,6 @@ function load() {
 
     $("cursor").checked = (o.cursor == "true");
     $("notext").checked = (o.notext == "true");
-    $("grab_and_drag").checked = (o.grab_and_drag == "true");
     $("debug").checked = (o.debug == "true");
 }
 
@@ -78,7 +76,7 @@ function onUpdate(ev) {
 
 document.addEventListener("DOMContentLoaded", ev => {
     load();
-    ["button","cursor","notext","debug", "grab_and_drag"].forEach(id =>
+    ["button","cursor","notext","debug"].forEach(id =>
         $(id).addEventListener("change",onUpdate,false));
 
     KEYS.forEach(key => $("key_"+key).addEventListener("change",onUpdate,false));

@@ -8,7 +8,6 @@ defaultOptions = ({ "button":    2,
                     "friction":  10,
                     "cursor":    true,
                     "notext":    false,
-                    "grab_and_drag": false,
                     "debug":     false,
                   });
 

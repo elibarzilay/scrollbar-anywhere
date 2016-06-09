@@ -10,8 +10,7 @@ ScrollbarAnywhere = (() => {
         options = msg.saveOptions;
         options.cursor = (options.cursor == "true");
         options.notext = (options.notext == "true");
-        options.grab_and_drag = (options.grab_and_drag == "true");
-        options.debug = (options.debug == "true");
+        options.debug  = (options.debug == "true");
         debug("saveOptions: ",options);
     });
 
@@ -409,12 +408,11 @@ ScrollbarAnywhere = (() => {
             viewportSize = getViewportSize(el);
             scrollSize = [el.scrollWidth, el.scrollHeight];
             scrollOrigin = [el.scrollLeft, el.scrollTop];
-            if (options.grab_and_drag) {
-                scrollMultiplier = [-options.scaling, -options.scaling];
-            } else {
-                scrollMultiplier = [(scrollSize[0] / viewportSize[0]) * 1.15 * options.scaling,
-                                                        (scrollSize[1] / viewportSize[1]) * 1.15 * options.scaling];
-            }
+            // grab-to-drag style
+            scrollMultiplier = [-options.scaling, -options.scaling];
+            // inverted: grab a virtual scrollbar
+            // scrollMultiplier = [(scrollSize[0] / viewportSize[0]) * options.scaling,
+            //                     (scrollSize[1] / viewportSize[1]) * options.scaling];
         }
 
         // Move the currently dragged element relative to the starting position
