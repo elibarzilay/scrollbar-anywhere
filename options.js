@@ -1,14 +1,5 @@
 "use strict";
 
-let options = ({ // default
-    button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
-    scaling: 1, speed: 6000, friction: 10,
-    notext: false,
-    debug: false
-});
-
-let KEYS = ["shift","ctrl","alt","meta"];
-
 let $ = document.getElementById.bind(document);
 
 function error(msg) {

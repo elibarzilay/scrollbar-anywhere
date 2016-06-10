@@ -1,7 +1,5 @@
 "use strict";
 
-(() => {
-
 // === Options ===
 
 let options = ({ // default
@@ -10,6 +8,7 @@ let options = ({ // default
     notext: false,
     debug: false
 });
+const KEYS = ["shift","ctrl","alt","meta"];
 
 function setOptions(o) {
     if (o) { Object.assign(options, o); debug("Options: %o", options); }
@@ -114,6 +113,13 @@ function findInnermostScrollable(e) {
 const LBUTTON_OVERRIDE_TAGS = ["A","INPUT","SELECT","TEXTAREA","BUTTON","LABEL","OBJECT","EMBED"];
 const MBUTTON_OVERRIDE_TAGS = ["A"];
 const RBUTTON_OVERRIDE_TAGS = ["A","INPUT","TEXTAREA","OBJECT","EMBED"];
+
+const LBUTTON=0, MBUTTON=1, RBUTTON=2;
+const TIME_STEP = 10;
+
+const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
+const ACTIVITIES = ["STOP","CLICK","DRAG","GLIDE"];
+
 function hasOverrideAncestor(e) {
     while (e != null) {
         if (options.button == LBUTTON ? (LBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
@@ -406,15 +412,6 @@ let Scroll = (() => {
     return ({ start, move, stop, listen });
 })();
 
-const LBUTTON=0, MBUTTON=1, RBUTTON=2;
-const KEYS = ["shift","ctrl","alt","meta"];
-const TIME_STEP = 10;
-
-const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
-const ACTIVITIES = ["STOP","CLICK","DRAG","GLIDE"];
-for (let i = 0; i < ACTIVITIES.length; i++)
-    window[ACTIVITIES[i]] = i;
-
 let activity = STOP;
 let blockContextMenu = false;
 let showScrollFix = false;
@@ -636,5 +633,3 @@ addEventListener("mouseup",       onMouseUp,     true);
 addEventListener("mousemove",     onMouseMove,   true);
 addEventListener("mouseout",      onMouseOut,    true);
 addEventListener("contextmenu",   onContextMenu, true);
-
-})();
