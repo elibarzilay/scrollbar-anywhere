@@ -27,9 +27,7 @@ function save() {
     if (isNaN(x) || x < 0) error("Friction must be a positive number");
     else options.friction = x;
 
-    for (let i = 0; i < KEYS.length; i++) {
-        options["key_"+KEYS[i]] = $("key_"+KEYS[i]).checked;
-    }
+    for (let k of KEYS) options["key_"+k] = $("key_"+k).checked;
 
     options.notext = $("notext").checked;
     options.debug = $("debug").checked;
@@ -39,16 +37,12 @@ function save() {
 
 function load() {
     $("button").selectedIndex = options.button;
-
-    for (let i = 0; i < KEYS.length; i++) {
-        $("key_"+KEYS[i]).checked = (options["key_"+KEYS[i]]+"" == "true");
-    }
-
+    for (let k of KEYS) $("key_"+k).checked = options["key_"+k];
     $("scaling").value  = options.scaling * 100;
     $("speed").value    = options.speed;
     $("friction").value = options.friction;
-    $("notext").checked = options.notext == "true";
-    $("debug").checked  = options.debug == "true";
+    $("notext").checked = options.notext;
+    $("debug").checked  = options.debug;
 }
 
 let updateTimeoutId;
@@ -62,7 +56,7 @@ function start() {
     ["button","notext","debug"].forEach(id =>
         $(id).addEventListener("change",onUpdate,false));
 
-    KEYS.forEach(key => $("key_"+key).addEventListener("change",onUpdate,false));
+    for (let k of KEYS) $("key_"+k).addEventListener("change", onUpdate, false);
 
     ["scaling","speed","friction"].forEach(id => {
         $(id).addEventListener("change",    onUpdate, true);

@@ -36,14 +36,8 @@ let vunit = (v)   => vdiv(vmag(v),v);
 
 // Test if the given point is directly over text
 let testElt = document.createElement("SPAN");
-function isOverText(e) {
-  let r1 = isOverText1(e);
-  let r2 = isOverText2(e);
-  console.log(">>> %s (%o)", r1==r2?"SAME":"!!DIFFERENT!!", r1);
-  return r1;
-}
-function isOverText1(e) {
-    let parent = e.target;
+function isOverText(ev) {
+    let parent = ev.target;
     if (parent == null) return false;
     for (let i = 0; i < parent.childNodes.length; i++) {
         let child = parent.childNodes[i];
@@ -52,24 +46,14 @@ function isOverText1(e) {
         // debug("TEXT_NODE: '"+child.textContent+"'")
         try {
             testElt.appendChild(parent.replaceChild(testElt,child));
-            if (testElt.isSameNode(document.elementFromPoint(e.clientX,e.clientY))) return true;
+            if (testElt.isSameNode(document.elementFromPoint(ev.clientX,ev.clientY)))
+                return true;
         } finally {
             if (child.isSameNode(testElt.firstChild)) testElt.removeChild(child);
             if (testElt.isSameNode(parent.childNodes[i])) parent.replaceChild(child,testElt);
         }
     }
     return false;
-}
-function isOverText2(e) {
-  let r = document.caretRangeFromPoint(e.clientX, e.clientY);
-  if (!r) return false;
-  if (r.startContainer.nodeType == Node.TEXT_NODE) {
-    let s = r.startOffset
-    console.log(">>>%o %s|%s", s,
-                r.startContainer.textContent.substring(0,s),
-                r.startContainer.textContent.substring(s));
-  }
-  return r.startContainer.nodeType == Node.TEXT_NODE;
 }
 
 // Test if a mouse event occurred over a scrollbar by testing if the
@@ -79,22 +63,15 @@ function isOverText2(e) {
 function isOverScrollbar(ev) {
     let t = ev.target == document.documentElement ? document.body : ev.target;
     if (t == document.body) {
-        let d = document.documentElement;
-        let clientWidth;
-        let clientHeight;
-        if (d.scrollHeight == d.clientHeight &&
-            d.scrollHeight == d.offsetHeight) {
+        let d = document.documentElement, cW, cH;
+        if (d.scrollHeight == d.clientHeight && d.scrollHeight == d.offsetHeight) {
             // Guessing it's a no doctype document
-            clientWidth = t.clientWidth;
-            clientHeight = t.clientHeight;
+            cW = t.clientWidth; cH = t.clientHeight;
         } else {
-            clientWidth = d.clientWidth;
-            clientHeight = d.clientHeight;
+            cW = d.clientWidth; cH = d.clientHeight;
         }
-        return (ev.offsetX - t.scrollLeft >= clientWidth ||
-                ev.offsetY - t.scrollTop >= clientHeight);
-    }
-    else if (!isScrollable(t)) return false;
+        return (ev.offsetX - t.scrollLeft >= cW || ev.offsetY - t.scrollTop >= cH);
+    } else if (!isScrollable(t)) return false;
     else return (ev.offsetX - t.scrollLeft >= t.clientWidth ||
                  ev.offsetY - t.scrollTop >= t.clientHeight);
 }
@@ -102,25 +79,19 @@ function isOverScrollbar(ev) {
 // Can the given element be scrolled on either axis?
 // That is, is the scroll size greater than the client size
 // and the CSS overflow set to scroll or auto?
-function isScrollable(e) {
-    let o;
-    if (e.scrollWidth > e.clientWidth) {
-        o = document.defaultView.getComputedStyle(e)["overflow-x"];
-        if (o == "auto" || o == "scroll") return true;
-    }
-    if (e.scrollHeight > e.clientHeight) {
-        o = document.defaultView.getComputedStyle(e)["overflow-y"];
-        if (o == "auto" || o == "scroll") return true;
-    }
-    return false;
+function isScrollable(elt) {
+    let o = css =>
+      ["auto","scroll"].indexOf(document.defaultView.getComputedStyle(elt)[css]) >= 0;
+    return (elt.scrollWidth  > elt.clientWidth  && o("overflow-x"))
+        || (elt.scrollHeight > elt.clientHeight && o("overflow-y"));
 }
 
 // Return the first ancestor (or the element itself) that is scrollable
-function findInnermostScrollable(e) {
+function findInnermostScrollable(elt) {
     while (true) {
-        if (e == document.documentElement) return document.body;
-        if (e == null || e == document.body || isScrollable(e)) return e;
-        e = e.parentNode;
+        if (elt == document.documentElement) return document.body;
+        if (elt == null || elt == document.body || isScrollable(elt)) return elt;
+        elt = elt.parentNode;
     }
 }
 
@@ -133,64 +104,57 @@ const LBUTTON=0, MBUTTON=1, RBUTTON=2;
 const TIME_STEP = 10;
 
 const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
-const ACTIVITIES = ["STOP","CLICK","DRAG","GLIDE"];
 
-function hasOverrideAncestor(e) {
-    while (e != null) {
-        if (options.button == LBUTTON ? (LBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
-                                         || hasRoleButtonAttribute(e))
-            : options.button == MBUTTON ? MBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
-            : options.button == RBUTTON ? RBUTTON_OVERRIDE_TAGS.indexOf(e.tagName)>=0
+function hasOverrideAncestor(elt) {
+    while (elt != null) {
+        if (options.button == LBUTTON ? (LBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
+                                         || hasRoleButtonAttribute(elt))
+            : options.button == MBUTTON ? MBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
+            : options.button == RBUTTON ? RBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
             : false)
             return true;
-        e = e.parentNode;
+        elt = elt.parentNode;
     }
     return false;
 }
 
-function hasRoleButtonAttribute(e) {
-    return e.attributes && e.attributes.role &&
-           e.attributes.role.value === "button";
+function hasRoleButtonAttribute(elt) {
+    return elt.attributes && elt.attributes.role &&
+           elt.attributes.role.value === "button";
 }
 
 // === Clipboard Stuff ===
+// Block the next paste event if a text element is active. This is a
+// workaround for middle-click paste not being preventable on Linux.
 let Clipboard = (() => {
     let blockElement = null;
-
-    function isPastable(e) {
-        return e && e.tagName == "INPUT" || e.tagName == "TEXTAREA";
+    function isPastable(elt) {
+        return elt && elt.tagName == "INPUT" || elt.tagName == "TEXTAREA";
     }
-
-    // Block the next paste event if a text element is active. This is a
-    // workaround for middle-click paste not being preventable on Linux.
     function blockPaste() {
-        let e = document.activeElement;
-        if (blockElement != e) {
-            if (blockElement) unblockPaste();
-            if (isPastable(e)) {
-                debug("blocking paste for active text element", e);
-                blockElement = e;
-                e.addEventListener("paste",onPaste,true);
-            }
+        let elt = document.activeElement;
+        if (blockElement == elt) return;
+        if (blockElement) unblockPaste();
+        if (isPastable(elt)) {
+            debug("blocking paste for active text element", elt);
+            blockElement = elt;
+            elt.addEventListener("paste", onPaste, true);
         }
     }
-
     function unblockPaste() {
-        if (blockElement) {
-            debug("unblocking paste", blockElement);
-            blockElement.removeEventListener("paste",onPaste,true);
-            blockElement = null;
-        }
+        if (!blockElement) return;
+        debug("unblocking paste", blockElement);
+        blockElement.removeEventListener("paste", onPaste, true);
+        blockElement = null;
     }
-
     function onPaste(ev) {
-        let e = ev.target;
-        if (!e) return;
-        if (blockElement == e) {
+        let elt = ev.target;
+        if (!elt) return;
+        if (blockElement == elt) {
             blockElement = null;
             ev.preventDefault();
         }
-        e.removeEventListener("paste", onPaste, true);
+        elt.removeEventListener("paste", onPaste, true);
     }
     return ({ blockPaste, unblockPaste });
 })();
@@ -203,12 +167,12 @@ let ScrollFix = (() => {
         scrollFixElement = document.createElement("div");
         scrollFixElement.setAttribute("style", "background: transparent none !important");
         scrollFixElement.style.position = "fixed";
-        scrollFixElement.style.top=0;
-        scrollFixElement.style.right=0;
-        scrollFixElement.style.bottom=0;
-        scrollFixElement.style.left=0;
-        scrollFixElement.style.zIndex=99999999;
-        scrollFixElement.style.display="block";
+        scrollFixElement.style.top      = 0;
+        scrollFixElement.style.right    = 0;
+        scrollFixElement.style.bottom   = 0;
+        scrollFixElement.style.left     = 0;
+        scrollFixElement.style.zIndex   = 99999999;
+        scrollFixElement.style.display  = "block";
         // scrollFixElement.style.borderRight="5px solid rgba(0,0,0,0.04)";
     }
 
@@ -241,22 +205,16 @@ let Selector = (() => {
 
     function update(x,y) {
         debug("Selector.update("+x+","+y+")");
-
-                  if (y < 0)            y = 0;
-        else if (y >= innerHeight) y = innerHeight-1;
-                  if (x < 0)            x = 0;
-        else if (x >= innerWidth)  x = innerWidth-1;
-
+        if (y < 0) y = 0; else if (y >= innerHeight) y = innerHeight-1;
+        if (x < 0) x = 0; else if (x >= innerWidth)  x = innerWidth-1;
         if (!startRange) start(x,y);
         let a = startRange;
         let b = document.caretRangeFromPoint(x,y);
-
         if (b != null) {
             if (b.compareBoundaryPoints(Range.START_TO_START,a) > 0)
                 b.setStart(a.startContainer,a.startOffset);
             else
                 b.setEnd(a.startContainer,a.startOffset);
-
             let s = getSelection();
             s.removeAllRanges();
             s.addRange(b);
@@ -387,7 +345,7 @@ let Scroll = (() => {
         scrollOrigin = [el.scrollLeft, el.scrollTop];
         // grab-to-drag style
         scrollMultiplier = [-options.scaling, -options.scaling];
-        // inverted: grab a virtual scrollbar
+        // inverted style: grab a virtual scrollbar
         // scrollMultiplier = [(scrollSize[0] / viewportSize[0]) * options.scaling,
         //                     (scrollSize[1] / viewportSize[1]) * options.scaling];
     }
@@ -414,9 +372,9 @@ let Scroll = (() => {
     // Stop dragging
     function stop() {
         if (!element) return;
-        element = null;
+        element      = null;
         viewportSize = null;
-        scrollSize = null;
+        scrollSize   = null;
         scrollOrigin = null;
     }
 
@@ -434,13 +392,12 @@ let mouseOrigin = null;
 let dragElement = null;
 
 function updateGlide() {
-    if (activity == GLIDE) {
-        debug("glide update");
-        let moving = Motion.glide(performance.now());
-        moving = Scroll.move(vsub(Motion.getPosition(),mouseOrigin)) && moving;
-        if (moving) setTimeout(updateGlide,TIME_STEP);
-        else stopGlide();
-    }
+    if (activity != GLIDE) return;
+    debug("glide update");
+    let moving = Motion.glide(performance.now());
+    moving = Scroll.move(vsub(Motion.getPosition(),mouseOrigin)) && moving;
+    if (moving) setTimeout(updateGlide,TIME_STEP);
+    else stopGlide();
 }
 
 function stopGlide() {
@@ -499,11 +456,11 @@ function onMouseDown(ev) {
         }
 
         if (ev.button != options.button) {
-            debug("wrong button, ignoring   ev.button="+ev.button+"   options.button="+options.button);
+            debug("wrong button, ignoring; ev.button="+ev.button+"; options.button="+options.button);
             break;
         }
 
-        if (!KEYS.every(key => (options["key_"+key]+"" == "true") == ev[key+"Key"])) {
+        if (!KEYS.every(key => options["key_"+key] == ev[key+"Key"])) {
             debug("wrong modkeys, ignoring");
             break;
         }
@@ -539,11 +496,11 @@ function onMouseDown(ev) {
         if (ev.button == RBUTTON &&
             (navigator.platform.match(/Mac/) || navigator.platform.match(/Linux/)))
             blockContextMenu = true;
-        showScrollFix = true
-        break
+        showScrollFix = true;
+        break;
 
     default:
-        debug("WARNING: illegal activity for mousedown: "+ACTIVITIES[activity]);
+        debug("WARNING: illegal activity for mousedown: "+activity);
         document.body.style.cursor = "auto";
         Clipboard.unblockPaste();
         ScrollFix.hide();
@@ -555,7 +512,15 @@ function onMouseDown(ev) {
 function onMouseMove(ev) {
     switch (activity) {
 
-    case STOP: break
+    case STOP: break;
+    case GLIDE: break;
+
+    case DRAG:
+        if (ev.button == options.button) {
+            updateDrag(ev);
+            ev.preventDefault();
+        }
+        break;
 
     case CLICK:
         if (ev.button == options.button) {
@@ -568,15 +533,6 @@ function onMouseMove(ev) {
             ev.preventDefault();
         }
         break;
-
-    case DRAG:
-        if (ev.button == options.button) {
-            updateDrag(ev);
-            ev.preventDefault();
-        }
-        break;
-
-    case GLIDE: break;
 
     default:
         debug("WARNING: unknown state: "+activity);
