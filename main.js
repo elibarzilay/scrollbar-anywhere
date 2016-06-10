@@ -35,27 +35,42 @@ let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
 let vunit = (v)   => vdiv(vmag(v),v);
 
 // Test if the given point is directly over text
-let isOverText = (() => {
-    let bonet = document.createElement("SPAN");
-    return (ev) => {
-        let mommy = ev.target;
-        if (mommy == null) return false;
-        for (let i = 0; i < mommy.childNodes.length; i++) {
-            let baby = mommy.childNodes[i];
-            if (baby.nodeType == Node.TEXT_NODE && baby.textContent.search(/\S/) != -1) {
-                // debug("TEXT_NODE: '"+baby.textContent+"'")
-                try {
-                    bonet.appendChild(mommy.replaceChild(bonet,baby));
-                    if (bonet.isSameNode(document.elementFromPoint(ev.clientX,ev.clientY))) return true;
-                } finally {
-                    if (baby.isSameNode(bonet.firstChild)) bonet.removeChild(baby);
-                    if (bonet.isSameNode(mommy.childNodes[i])) mommy.replaceChild(baby,bonet);
-                }
-            }
+let testElt = document.createElement("SPAN");
+function isOverText(e) {
+  let r1 = isOverText1(e);
+  let r2 = isOverText2(e);
+  console.log(">>> %s (%o)", r1==r2?"SAME":"!!DIFFERENT!!", r1);
+  return r1;
+}
+function isOverText1(e) {
+    let parent = e.target;
+    if (parent == null) return false;
+    for (let i = 0; i < parent.childNodes.length; i++) {
+        let child = parent.childNodes[i];
+        if (child.nodeType !== Node.TEXT_NODE) continue;
+        if (child.textContent.search(/\S/) == -1) continue;
+        // debug("TEXT_NODE: '"+child.textContent+"'")
+        try {
+            testElt.appendChild(parent.replaceChild(testElt,child));
+            if (testElt.isSameNode(document.elementFromPoint(e.clientX,e.clientY))) return true;
+        } finally {
+            if (child.isSameNode(testElt.firstChild)) testElt.removeChild(child);
+            if (testElt.isSameNode(parent.childNodes[i])) parent.replaceChild(child,testElt);
         }
-        return false;
     }
-})();
+    return false;
+}
+function isOverText2(e) {
+  let r = document.caretRangeFromPoint(e.clientX, e.clientY);
+  if (!r) return false;
+  if (r.startContainer.nodeType == Node.TEXT_NODE) {
+    let s = r.startOffset
+    console.log(">>>%o %s|%s", s,
+                r.startContainer.textContent.substring(0,s),
+                r.startContainer.textContent.substring(s));
+  }
+  return r.startContainer.nodeType == Node.TEXT_NODE;
+}
 
 // Test if a mouse event occurred over a scrollbar by testing if the
 // coordinates of the event are on the outside of a scrollable element.
