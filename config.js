@@ -44,32 +44,29 @@ let updateTimeoutId;
 
 function onUpdate(ev) {
     if (updateTimeoutId != null) clearTimeout(updateTimeoutId);
-    updateTimeoutId = setTimeout(save,200);
+    updateTimeoutId = setTimeout(save, 200);
 }
 
 function start() {
-    ["button","notext","debug"].forEach(id =>
+    ["button", "notext", "debug"].forEach(id =>
         $(id).addEventListener("change",onUpdate,false));
 
     for (let k of KEYS) $("key_"+k).addEventListener("change", onUpdate, false);
 
-    ["speed","friction"].forEach(id => {
-        $(id).addEventListener("change",    onUpdate, true);
-        $(id).addEventListener("keydown",   onUpdate, true);
-        $(id).addEventListener("mousedown", onUpdate, true);
-        $(id).addEventListener("blur",      onUpdate, true);
-    });
-    let footerText = ["<i>Here's a bunch of text to scroll:</i>",""];
+    ["speed","friction"].forEach(id =>
+        ["change", "keydown", "mousedown", "blur"].forEach(evname =>
+            $(id).addEventListener(evname, onUpdate, true)));
+    let footerText = ["<i>Here's a bunch of text to scroll:</i>", ""];
     let beers = 99;
     function bottles(n, text) {
         footerText.push((n==0 ? "no more" : n)+" bottle"+(n==1?"":"s")
                         + " of beer"+text);
     }
     while (beers > 0) {
-        bottles(beers," on the wall,");
-        bottles(beers,"!");
+        bottles(beers, " on the wall,");
+        bottles(beers, "!");
         footerText.push("Take one down, pass it around");
-        bottles(--beers," on the wall.");
+        bottles(--beers, " on the wall.");
         footerText.push("");
     }
     $("long_footer").innerHTML = footerText.join("<br>");

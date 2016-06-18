@@ -8,7 +8,7 @@ let options = ({ // default
     notext: false,
     debug: false
 });
-const KEYS = ["shift","ctrl","alt","meta"];
+const KEYS = ["shift", "ctrl", "alt", "meta"];
 
 function setOptions(o) {
     if (o) { Object.assign(options, o); debug("Options: %o", options); }
@@ -32,7 +32,7 @@ let vmul  = (s,v) => [s*v[0], s*v[1]];
 let vdiv  = (s,v) => [v[0]/s, v[1]/s];
 let vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
 let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
-let vunit = (v)   => vdiv(vmag(v),v);
+let vunit = (v)   => vdiv(vmag(v), v);
 
 // Test if the given point is directly over text
 let testElt = document.createElement("SPAN");
@@ -45,12 +45,12 @@ function isOverText(ev) {
         if (child.textContent.search(/\S/) == -1) continue;
         // debug("TEXT_NODE: '"+child.textContent+"'")
         try {
-            testElt.appendChild(parent.replaceChild(testElt,child));
-            if (testElt.isSameNode(document.elementFromPoint(ev.clientX,ev.clientY)))
+            testElt.appendChild(parent.replaceChild(testElt, child));
+            if (testElt.isSameNode(document.elementFromPoint(ev.clientX, ev.clientY)))
                 return true;
         } finally {
             if (child.isSameNode(testElt.firstChild)) testElt.removeChild(child);
-            if (testElt.isSameNode(parent.childNodes[i])) parent.replaceChild(child,testElt);
+            if (testElt.isSameNode(parent.childNodes[i])) parent.replaceChild(child, testElt);
         }
     }
     return false;
@@ -81,7 +81,7 @@ function isOverScrollbar(ev) {
 // and the CSS overflow set to scroll or auto?
 function isScrollable(elt) {
     let o = css =>
-        ["auto","scroll"].indexOf(document.defaultView.getComputedStyle(elt)[css]) >= 0;
+        ["auto", "scroll"].indexOf(document.defaultView.getComputedStyle(elt)[css]) >= 0;
     return (elt.scrollWidth  > elt.clientWidth  && o("overflow-x"))
         || (elt.scrollHeight > elt.clientHeight && o("overflow-y"));
 }
@@ -96,9 +96,10 @@ function findInnermostScrollable(elt) {
 }
 
 // Don't drag when left-clicking on these elements
-const LBUTTON_OVERRIDE_TAGS = ["A","INPUT","SELECT","TEXTAREA","BUTTON","LABEL","OBJECT","EMBED"];
+const LBUTTON_OVERRIDE_TAGS = ["A", "INPUT", "SELECT", "TEXTAREA", "BUTTON",
+                               "LABEL", "OBJECT", "EMBED"];
 const MBUTTON_OVERRIDE_TAGS = ["A"];
-const RBUTTON_OVERRIDE_TAGS = ["A","INPUT","TEXTAREA","OBJECT","EMBED"];
+const RBUTTON_OVERRIDE_TAGS = ["A", "INPUT", "TEXTAREA", "OBJECT", "EMBED"];
 
 const LBUTTON=0, MBUTTON=1, RBUTTON=2;
 const TIME_STEP = 10;
@@ -150,10 +151,7 @@ let Clipboard = (() => {
     function onPaste(ev) {
         let elt = ev.target;
         if (!elt) return;
-        if (blockElement == elt) {
-            blockElement = null;
-            ev.preventDefault();
-        }
+        if (blockElement == elt) { blockElement = null; ev.preventDefault(); }
         elt.removeEventListener("paste", onPaste, true);
     }
     return ({ blockPaste, unblockPaste });
@@ -161,94 +159,35 @@ let Clipboard = (() => {
 
 // === Scrollfix hack ===
 let ScrollFix = (() => {
-    let scrollFixElement = null;
-
+    let elt = null;
     function createScrollFix() {
-        scrollFixElement = document.createElement("div");
-        scrollFixElement.setAttribute("style", "background: transparent none !important");
-        scrollFixElement.style.position = "fixed";
-        scrollFixElement.style.top      = 0;
-        scrollFixElement.style.right    = 0;
-        scrollFixElement.style.bottom   = 0;
-        scrollFixElement.style.left     = 0;
-        scrollFixElement.style.zIndex   = 99999999;
-        scrollFixElement.style.display  = "block";
-        // scrollFixElement.style.borderRight="5px solid rgba(0,0,0,0.04)";
+        elt = document.createElement("div");
+        elt.setAttribute("style", "background: transparent none !important");
+        elt.style.position = "fixed";
+        elt.style.top      = 0;
+        elt.style.right    = 0;
+        elt.style.bottom   = 0;
+        elt.style.left     = 0;
+        elt.style.zIndex   = 99999999;
+        elt.style.display  = "block";
+        // elt.style.borderRight="5px solid rgba(0,0,0,0.04)";
     }
-
     function show() {
-        if (scrollFixElement === null) createScrollFix();
-        document.body.appendChild(scrollFixElement);
+        if (elt === null) createScrollFix();
+        document.body.appendChild(elt);
     }
-
     function hide() {
-        if (scrollFixElement !== null && scrollFixElement.parentNode !== null)
-            scrollFixElement.parentNode.removeChild(scrollFixElement);
+        if (elt !== null && elt.parentNode !== null) elt.parentNode.removeChild(elt);
     }
-
     return ({ show, hide })
-})();
-
-// === Fake Selection ===
-
-let Selector = (() => {
-
-    let startRange = null;
-
-    function start(x,y) {
-        debug("Selector.start("+x+","+y+")");
-        startRange = document.caretRangeFromPoint(x,y);
-        let s = getSelection();
-        s.removeAllRanges();
-        s.addRange(startRange);
-    }
-
-    function update(x,y) {
-        debug("Selector.update("+x+","+y+")");
-        if (y < 0) y = 0; else if (y >= innerHeight) y = innerHeight-1;
-        if (x < 0) x = 0; else if (x >= innerWidth)  x = innerWidth-1;
-        if (!startRange) start(x,y);
-        let a = startRange;
-        let b = document.caretRangeFromPoint(x,y);
-        if (b != null) {
-            if (b.compareBoundaryPoints(Range.START_TO_START,a) > 0)
-                b.setStart(a.startContainer,a.startOffset);
-            else
-                b.setEnd(a.startContainer,a.startOffset);
-            let s = getSelection();
-            s.removeAllRanges();
-            s.addRange(b);
-        }
-    }
-
-    function cancel() {
-        debug("Selector.cancel()");
-        startRange = null;
-        getSelection().removeAllRanges();
-    }
-
-    function scroll(ev) {
-        let y = ev.clientY;
-        if (y < 0) {
-            scrollBy(0,y);
-            return true;
-        } else if (y >= innerHeight) {
-            scrollBy(0,y-innerHeight);
-            return true;
-        }
-        return false;
-    }
-
-    return ({ start, update, cancel, scroll });
 })();
 
 // === Motion ===
 
 let Motion = (() => {
-    const MIN_SPEED_SQUARED = 1;
     const FILTER_INTERVAL = 100;
     let position = null;
-    let velocity = [0,0];
+    let velocity = [0, 0];
     let updateTime = null;
     let impulses = [];
 
@@ -256,11 +195,11 @@ let Motion = (() => {
     // return if/not there is motion
     function clamp() {
         let speedSquared = vmag2(velocity);
-        if (speedSquared <= MIN_SPEED_SQUARED) {
-            velocity = [0,0];
+        if (speedSquared <= 1) {
+            velocity = [0, 0];
             return false;
         } else if (speedSquared > options.speed*options.speed) {
-            velocity = vmul(options.speed,vunit(velocity));
+            velocity = vmul(options.speed, vunit(velocity));
         }
         return true;
     }
@@ -268,26 +207,24 @@ let Motion = (() => {
     // zero velocity
     function stop() {
         impulses = [];
-        velocity = [0,0];
+        velocity = [0, 0];
     }
 
     // impulsively move to given position and time
     // return if/not there is motion
-    function impulse(pos,time) {
+    function impulse(pos, time) {
         position = pos;
         updateTime = time;
-
         while (impulses.length > 0 && (time - impulses[0].time) > FILTER_INTERVAL)
             impulses.shift();
-        impulses.push({pos:pos,time:time});
-
+        impulses.push({pos, time});
         if (impulses.length < 2) {
-            velocity = [0,0];
+            velocity = [0, 0];
             return false;
         } else {
             let a = impulses[0];
             let b = impulses[impulses.length-1];
-            velocity = vdiv((b.time - a.time)/1000, vsub(b.pos,a.pos));
+            velocity = vdiv((b.time-a.time)/1000, vsub(b.pos,a.pos));
             return clamp();
         }
     }
@@ -297,7 +234,6 @@ let Motion = (() => {
     function glide(time) {
         impulses = [];
         let moving;
-
         if (updateTime == null) {
             moving = false;
         } else {
@@ -306,7 +242,7 @@ let Motion = (() => {
             frictionMultiplier = Math.pow(frictionMultiplier, deltaSeconds*FILTER_INTERVAL);
             velocity = vmul(frictionMultiplier, velocity);
             moving = clamp();
-            position = vadd(position,vmul(deltaSeconds,velocity));
+            position = vadd(position, vmul(deltaSeconds,velocity));
         }
         updateTime = time;
         return moving;
@@ -319,13 +255,11 @@ let Motion = (() => {
 
 let Scroll = (() => {
     let elt, scrollOrigin;
-
     // Start dragging
     function start(ev) {
         elt = findInnermostScrollable(ev.target);
         scrollOrigin = [elt.scrollLeft, elt.scrollTop];
     }
-
     // Move the currently dragged element relative to the starting position.
     // Return if/not the element actually moved (i.e. if it did not hit a
     // boundary on both axes).
@@ -336,7 +270,7 @@ let Scroll = (() => {
         elt.scrollTop  = scrollOrigin[1] - pos[1];
         return elt.scrollLeft != x || elt.scrollTop != y;
     }
-
+    //
     return ({ start, move });
 })();
 
@@ -350,7 +284,7 @@ function updateGlide() {
     debug("glide update");
     let moving = Motion.glide(performance.now());
     moving = Scroll.move(vsub(Motion.getPosition(),mouseOrigin)) && moving;
-    if (moving) setTimeout(updateGlide,TIME_STEP);
+    if (moving) setTimeout(updateGlide, TIME_STEP);
     else stopGlide();
 }
 
@@ -362,9 +296,9 @@ function stopGlide() {
 
 function updateDrag(ev) {
     debug("drag update");
-    let v = [ev.clientX,ev.clientY], moving = false;
-    moving = Motion.impulse(v,ev.timeStamp);
-    Scroll.move(vsub(v,mouseOrigin));
+    let pos = evPos(ev), moving = false;
+    moving = Motion.impulse(pos, ev.timeStamp);
+    Scroll.move(vsub(pos,mouseOrigin));
     return moving;
 }
 
@@ -382,7 +316,7 @@ function stopDrag(ev) {
     Clipboard.unblockPaste();
     ScrollFix.hide();
     if (updateDrag(ev)) {
-        window.setTimeout(updateGlide,TIME_STEP);
+        window.setTimeout(updateGlide, TIME_STEP);
         activity = GLIDE;
     } else {
         activity = STOP;
@@ -401,38 +335,26 @@ function onMouseDown(ev) {
     case STOP:
         if (!ev.target) {
             debug("target is null, ignoring");
-            break;
-        }
-
+            break; }
         if (ev.button != options.button) {
             debug("wrong button, ignoring; ev.button="+ev.button+"; options.button="+options.button);
-            break;
-        }
-
+            break; }
         if (!KEYS.every(key => options["key_"+key] == ev[key+"Key"])) {
             debug("wrong modkeys, ignoring");
-            break;
-        }
-
+            break; }
         if (hasOverrideAncestor(ev.target)) {
-            debug("forbidden target element, ignoring",ev);
-            break;
-        }
-
+            debug("forbidden target element, ignoring", ev);
+            break; }
         if (isOverScrollbar(ev)) {
-            debug("detected scrollbar click, ignoring",ev);
-            break;
-        }
-
+            debug("detected scrollbar click, ignoring", ev);
+            break; }
         if (options.notext && isOverText(ev)) {
             debug("detected text node, ignoring");
-            break;
-        }
-
-        debug("click MouseEvent=",ev);
+            break; }
+        debug("click MouseEvent=", ev);
         activity = CLICK;
-        mouseOrigin = [ev.clientX,ev.clientY];
-        Motion.impulse(mouseOrigin,ev.timeStamp);
+        mouseOrigin = [ev.clientX, ev.clientY];
+        Motion.impulse(mouseOrigin, ev.timeStamp);
         ev.preventDefault();
         if (ev.button == MBUTTON && ev.target != document.activeElement)
             Clipboard.blockPaste()
@@ -466,10 +388,7 @@ function onMouseMove(ev) {
     case CLICK:
         if (ev.button == options.button) {
             if (options.button == RBUTTON) blockContextMenu = true;
-            if (showScrollFix) {
-                ScrollFix.show();
-                showScrollFix = false;
-            }
+            if (showScrollFix) { ScrollFix.show(); showScrollFix = false; }
             startDrag(ev);
             ev.preventDefault();
         }
@@ -494,10 +413,7 @@ function onMouseUp(ev) {
         break;
 
     case DRAG:
-        if (ev.button == options.button) {
-            stopDrag(ev);
-            ev.preventDefault();
-        }
+        if (ev.button == options.button) { stopDrag(ev); ev.preventDefault(); }
         break;
 
     case GLIDE:
@@ -510,9 +426,7 @@ function onMouseUp(ev) {
 function onMouseOut(ev) {
     switch (activity) {
     case STOP: case CLICK: case GLIDE: break;
-    case DRAG:
-        if (ev.toElement == null) stopDrag(ev);
-        break;
+    case DRAG: if (ev.toElement == null) stopDrag(ev); break;
     }
 }
 
