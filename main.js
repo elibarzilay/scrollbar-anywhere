@@ -24,7 +24,7 @@ function debug(str, ...args) {
     console.debug("SA: "+str, ...args);
 }
 
-// === Vector math ===
+// === Vector math and other utilities ===
 
 let vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
 let vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
@@ -33,6 +33,8 @@ let vdiv  = (s,v) => [v[0]/s, v[1]/s];
 let vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
 let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
 let vunit = (v)   => vdiv(vmag(v), v);
+
+let evPos = (ev) => [ev.clientX, ev.clientY];
 
 // Test if the given point is directly over text
 let testElt = document.createElement("SPAN");
@@ -353,7 +355,7 @@ function onMouseDown(ev) {
             break; }
         debug("click MouseEvent=", ev);
         activity = CLICK;
-        mouseOrigin = [ev.clientX, ev.clientY];
+        mouseOrigin = evPos(ev);
         Motion.impulse(mouseOrigin, ev.timeStamp);
         ev.preventDefault();
         if (ev.button == MBUTTON && ev.target != document.activeElement)
@@ -386,12 +388,13 @@ function onMouseMove(ev) {
         break;
 
     case CLICK:
-        if (ev.button == options.button) {
+        if (ev.button != options.button) break;
+        if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
             if (options.button == RBUTTON) blockContextMenu = true;
             if (showScrollFix) { ScrollFix.show(); showScrollFix = false; }
             startDrag(ev);
-            ev.preventDefault();
         }
+        ev.preventDefault();
         break;
 
     }
