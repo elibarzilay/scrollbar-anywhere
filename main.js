@@ -318,43 +318,32 @@ let Motion = (() => {
 })();
 
 let Scroll = (() => {
-    let element, scrollOrigin;
+    let elt, scrollOrigin;
 
-    // Start dragging given element
-    function start(el) {
-        if (element) stop();
-        element = el;
-        scrollOrigin = [el.scrollLeft, el.scrollTop];
+    // Start dragging
+    function start(ev) {
+        elt = findInnermostScrollable(ev.target);
+        scrollOrigin = [elt.scrollLeft, elt.scrollTop];
     }
 
     // Move the currently dragged element relative to the starting position.
     // Return if/not the element actually moved (i.e. if it did not hit a
     // boundary on both axes).
     function move(pos) {
-        if (element) {
-            let x = element.scrollLeft;
-            let y = element.scrollTop;
-            element.scrollLeft = scrollOrigin[0] - pos[0];
-            element.scrollTop  = scrollOrigin[1] - pos[1];
-            return element.scrollLeft != x || element.scrollTop != y;
-        }
+        if (!elt) return false;
+        let x = elt.scrollLeft, y = elt.scrollTop;
+        elt.scrollLeft = scrollOrigin[0] - pos[0];
+        elt.scrollTop  = scrollOrigin[1] - pos[1];
+        return elt.scrollLeft != x || elt.scrollTop != y;
     }
 
-    // Stop dragging
-    function stop() {
-        if (!element) return;
-        element      = null;
-        scrollOrigin = null;
-    }
-
-    return ({ start, move, stop });
+    return ({ start, move });
 })();
 
 let activity = STOP;
 let blockContextMenu = false;
 let showScrollFix = false;
 let mouseOrigin = null;
-let dragElement = null;
 
 function updateGlide() {
     if (activity != GLIDE) return;
@@ -369,17 +358,13 @@ function stopGlide() {
     debug("glide stop");
     activity = STOP;
     Motion.stop();
-    Scroll.stop();
 }
 
 function updateDrag(ev) {
     debug("drag update");
-    let v = [ev.clientX,ev.clientY];
-    let moving = false;
-    if (v[0] && v[1]) {
-        moving = Motion.impulse(v,ev.timeStamp);
-        Scroll.move(vsub(v,mouseOrigin));
-    }
+    let v = [ev.clientX,ev.clientY], moving = false;
+    moving = Motion.impulse(v,ev.timeStamp);
+    Scroll.move(vsub(v,mouseOrigin));
     return moving;
 }
 
@@ -387,7 +372,7 @@ function startDrag(ev) {
     debug("drag start");
     activity = DRAG;
     document.body.style.cursor = "-webkit-grabbing";
-    Scroll.start(dragElement);
+    Scroll.start(ev);
     return updateDrag(ev);
 }
 
@@ -400,7 +385,6 @@ function stopDrag(ev) {
         window.setTimeout(updateGlide,TIME_STEP);
         activity = GLIDE;
     } else {
-        Scroll.stop();
         activity = STOP;
     }
 }
@@ -440,18 +424,12 @@ function onMouseDown(ev) {
             break;
         }
 
-        dragElement = findInnermostScrollable(ev.target);
-        if (!dragElement) {
-            debug("no scrollable ancestor found, ignoring",ev);
-            break;
-        }
-
         if (options.notext && isOverText(ev)) {
             debug("detected text node, ignoring");
             break;
         }
 
-        debug("click MouseEvent=",ev," dragElement=",dragElement);
+        debug("click MouseEvent=",ev);
         activity = CLICK;
         mouseOrigin = [ev.clientX,ev.clientY];
         Motion.impulse(mouseOrigin,ev.timeStamp);
@@ -476,9 +454,7 @@ function onMouseDown(ev) {
 
 function onMouseMove(ev) {
     switch (activity) {
-
-    case STOP: break;
-    case GLIDE: break;
+    case STOP: case GLIDE: break;
 
     case DRAG:
         if (ev.button == options.button) {
@@ -499,9 +475,6 @@ function onMouseMove(ev) {
         }
         break;
 
-    default:
-        debug("WARNING: unknown state: "+activity);
-        break;
     }
 }
 
@@ -531,27 +504,14 @@ function onMouseUp(ev) {
         stopGlide(ev);
         break;
 
-    default:
-        debug("WARNING: unknown state: "+activity);
-        break;
     }
 }
 
 function onMouseOut(ev) {
     switch (activity) {
-
-    case STOP: break;
-
-    case CLICK: break;
-
+    case STOP: case CLICK: case GLIDE: break;
     case DRAG:
         if (ev.toElement == null) stopDrag(ev);
-        break;
-
-    case GLIDE: break;
-
-    default:
-        debug("WARNING: unknown state: "+activity);
         break;
     }
 }
