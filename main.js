@@ -4,7 +4,7 @@
 
 let options = ({ // default
     button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
-    scaling: 1, speed: 6000, friction: 10,
+    speed: 6000, friction: 10,
     notext: false,
     debug: false
 });
@@ -81,7 +81,7 @@ function isOverScrollbar(ev) {
 // and the CSS overflow set to scroll or auto?
 function isScrollable(elt) {
     let o = css =>
-      ["auto","scroll"].indexOf(document.defaultView.getComputedStyle(elt)[css]) >= 0;
+        ["auto","scroll"].indexOf(document.defaultView.getComputedStyle(elt)[css]) >= 0;
     return (elt.scrollWidth  > elt.clientWidth  && o("overflow-x"))
         || (elt.scrollHeight > elt.clientHeight && o("overflow-y"));
 }
@@ -318,53 +318,24 @@ let Motion = (() => {
 })();
 
 let Scroll = (() => {
-    let scrolling = false;
-    let element;
-    let scrollOrigin;
-    let viewportSize;
-    let scrollSize;
-    let scrollListener;
-    let scrollMultiplier;
-
-    // Return the size of the element as it appears in parent's layout
-    function getViewportSize(el) {
-        if (el == document.body) return [window.innerWidth, window.innerHeight];
-        else return [el.clientWidth, el.clientHeight];
-    }
-
-    function getScrollEventSource(el) {
-        return el == document.body ? document : el;
-    }
+    let element, scrollOrigin;
 
     // Start dragging given element
     function start(el) {
         if (element) stop();
         element = el;
-        viewportSize = getViewportSize(el);
-        scrollSize = [el.scrollWidth, el.scrollHeight];
         scrollOrigin = [el.scrollLeft, el.scrollTop];
-        // grab-to-drag style
-        scrollMultiplier = [-options.scaling, -options.scaling];
-        // inverted style: grab a virtual scrollbar
-        // scrollMultiplier = [(scrollSize[0] / viewportSize[0]) * options.scaling,
-        //                     (scrollSize[1] / viewportSize[1]) * options.scaling];
     }
 
-    // Move the currently dragged element relative to the starting position
-    // and applying the the scaling setting.
+    // Move the currently dragged element relative to the starting position.
     // Return if/not the element actually moved (i.e. if it did not hit a
     // boundary on both axes).
     function move(pos) {
         if (element) {
             let x = element.scrollLeft;
             let y = element.scrollTop;
-            try {
-                scrolling = true;
-                element.scrollLeft = scrollOrigin[0] + pos[0] * scrollMultiplier[0];
-                element.scrollTop  = scrollOrigin[1] + pos[1] * scrollMultiplier[1];
-            } finally {
-                scrolling = false;
-            }
+            element.scrollLeft = scrollOrigin[0] - pos[0];
+            element.scrollTop  = scrollOrigin[1] - pos[1];
             return element.scrollLeft != x || element.scrollTop != y;
         }
     }
@@ -373,16 +344,10 @@ let Scroll = (() => {
     function stop() {
         if (!element) return;
         element      = null;
-        viewportSize = null;
-        scrollSize   = null;
         scrollOrigin = null;
     }
 
-    function listen(fn) {
-        scrollListener = fn;
-    }
-
-    return ({ start, move, stop, listen });
+    return ({ start, move, stop });
 })();
 
 let activity = STOP;

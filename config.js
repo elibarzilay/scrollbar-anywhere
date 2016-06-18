@@ -15,10 +15,6 @@ function save() {
     if (x < 0 || x > 2) error("Somehow, you broke the button field");
     else options.button = x;
 
-    x = $("scaling").value-0;
-    if (isNaN(x)) error("Scaling must be a number");
-    else options.scaling = x / 100
-
     x = $("speed").value-0;
     if (isNaN(x) || x < 0) error("Top speed must be a positive number or zero");
     else options.speed = x;
@@ -38,7 +34,6 @@ function save() {
 function load() {
     $("button").selectedIndex = options.button;
     for (let k of KEYS) $("key_"+k).checked = options["key_"+k];
-    $("scaling").value  = options.scaling * 100;
     $("speed").value    = options.speed;
     $("friction").value = options.friction;
     $("notext").checked = options.notext;
@@ -58,7 +53,7 @@ function start() {
 
     for (let k of KEYS) $("key_"+k).addEventListener("change", onUpdate, false);
 
-    ["scaling","speed","friction"].forEach(id => {
+    ["speed","friction"].forEach(id => {
         $(id).addEventListener("change",    onUpdate, true);
         $(id).addEventListener("keydown",   onUpdate, true);
         $(id).addEventListener("mousedown", onUpdate, true);
