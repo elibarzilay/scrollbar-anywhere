@@ -154,31 +154,6 @@ let Clipboard = (() => {
     return ({ blockPaste, unblockPaste });
 })();
 
-// === Scrollfix hack ===
-let ScrollFix = (() => {
-    let elt = null;
-    function createScrollFix() {
-        elt = document.createElement("div");
-        elt.setAttribute("style", "background: transparent none !important");
-        elt.style.position = "fixed";
-        elt.style.top      = 0;
-        elt.style.right    = 0;
-        elt.style.bottom   = 0;
-        elt.style.left     = 0;
-        elt.style.zIndex   = 99999999;
-        elt.style.display  = "block";
-        // elt.style.borderRight="5px solid rgba(0,0,0,0.04)";
-    }
-    function show() {
-        if (elt === null) createScrollFix();
-        document.body.appendChild(elt);
-    }
-    function hide() {
-        if (elt !== null && elt.parentNode !== null) elt.parentNode.removeChild(elt);
-    }
-    return ({ show, hide })
-})();
-
 // === Motion ===
 
 let Motion = (() => {
@@ -276,7 +251,6 @@ let Scroll = (() => {
 
 let activity = STOP;
 let blockContextMenu = false;
-let showScrollFix = false;
 let mouseOrigin = null;
 
 function updateGlide() {
@@ -314,7 +288,6 @@ function stopDrag(ev) {
     debug("drag stop");
     document.body.style.cursor = "auto";
     Clipboard.unblockPaste();
-    ScrollFix.hide();
     if (updateDrag(ev)) {
         window.setTimeout(updateGlide, TIME_STEP);
         activity = GLIDE;
@@ -363,14 +336,12 @@ function onMouseDown(ev) {
         if (ev.button == RBUTTON &&
             (navigator.platform.match(/Mac/) || navigator.platform.match(/Linux/)))
             blockContextMenu = true;
-        showScrollFix = true;
         break;
     //
     default:
         console.log("WARNING: illegal activity for mousedown:", activity);
         document.body.style.cursor = "auto";
         Clipboard.unblockPaste();
-        ScrollFix.hide();
         activity = STOP;
         return onMouseDown(ev);
     }
@@ -392,7 +363,6 @@ function onMouseMove(ev) {
         if (ev.button != options.button) break;
         if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
             if (options.button == RBUTTON) blockContextMenu = true;
-            if (showScrollFix) { ScrollFix.show(); showScrollFix = false; }
             startDrag(ev);
         }
         ev.preventDefault();
@@ -410,7 +380,6 @@ function onMouseUp(ev) {
     case CLICK:
         debug("unclick, no drag");
         Clipboard.unblockPaste();
-        ScrollFix.hide();
         if (ev.button == 0) getSelection().removeAllRanges();
         if (document.activeElement) document.activeElement.blur();
         if (ev.target) ev.target.focus();
