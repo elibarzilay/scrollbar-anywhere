@@ -99,8 +99,6 @@ function findInnermostScrollable(elt) {
 // Don't drag when left-clicking on these elements
 const LBUTTON_OVERRIDE_TAGS = ["A", "INPUT", "SELECT", "TEXTAREA", "BUTTON",
                                "LABEL", "OBJECT", "EMBED"];
-const MBUTTON_OVERRIDE_TAGS = ["A"];
-const RBUTTON_OVERRIDE_TAGS = ["A", "INPUT", "TEXTAREA", "OBJECT", "EMBED"];
 
 const LBUTTON=0, MBUTTON=1, RBUTTON=2;
 const TIME_STEP = 10;
@@ -109,11 +107,9 @@ const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
 
 function hasOverrideAncestor(elt) {
     while (elt != null) {
-        if (options.button == LBUTTON ? (LBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
-                                         || hasRoleButtonAttribute(elt))
-            : options.button == MBUTTON ? MBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
-            : options.button == RBUTTON ? RBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
-            : false)
+        if (options.button == LBUTTON
+            && (LBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
+                || hasRoleButtonAttribute(elt)))
             return true;
         elt = elt.parentNode;
     }
