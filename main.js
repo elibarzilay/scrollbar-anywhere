@@ -4,7 +4,7 @@
 
 let options = ({ // default
     button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
-    speed: 6000, friction: 10,
+    speed: 20000, friction: 6,
     notext: false,
     debug: false
 });
