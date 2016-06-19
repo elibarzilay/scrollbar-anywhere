@@ -28,11 +28,10 @@ function debug(str, ...args) {
 
 let vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
 let vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
-let vmul  = (s,v) => [s*v[0], s*v[1]];
-let vdiv  = (s,v) => [v[0]/s, v[1]/s];
+let vmul  = (v,s) => [s*v[0], s*v[1]];
+let vdiv  = (v,s) => [v[0]/s, v[1]/s];
 let vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
 let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
-let vunit = (v)   => vdiv(vmag(v), v);
 
 let evPos = (ev) => [ev.clientX, ev.clientY];
 
@@ -45,7 +44,7 @@ function isOverText(ev) {
         let child = parent.childNodes[i];
         if (child.nodeType !== Node.TEXT_NODE) continue;
         if (child.textContent.search(/\S/) == -1) continue;
-        // debug("TEXT_NODE: '"+child.textContent+"'")
+        // debug("TEXT_NODE: \"%s\"", child.textContent);
         try {
             testElt.appendChild(parent.replaceChild(testElt, child));
             if (testElt.isSameNode(document.elementFromPoint(ev.clientX, ev.clientY)))
@@ -191,50 +190,53 @@ let Motion = (() => {
     let position = null;
     let velocity = [0, 0];
     let updateTime = null;
-    let impulses = [];
+    let impulses = {new: null, old: null};
 
-    // ensure velocity is within min and max values
-    // return if/not there is motion
+    // ensure velocity is within min and max values,
+    // return true if there is motion
     function clamp() {
         let speedSquared = vmag2(velocity);
         if (speedSquared <= 1) {
             velocity = [0, 0];
             return false;
         } else if (speedSquared > options.speed*options.speed) {
-            velocity = vmul(options.speed, vunit(velocity));
+            velocity = vmul(velocity, options.speed/vmag(velocity));
         }
         return true;
     }
 
     // zero velocity
     function stop() {
-        impulses = [];
+        impulses = {new: null, old: null};
         velocity = [0, 0];
     }
 
-    // impulsively move to given position and time
-    // return if/not there is motion
+    // impulsively move to given position and time,
+    // return true if there is motion
     function impulse(pos, time) {
         position = pos;
         updateTime = time;
-        while (impulses.length > 0 && (time - impulses[0].time) > FILTER_INTERVAL)
-            impulses.shift();
-        impulses.push({pos, time});
-        if (impulses.length < 2) {
+        while (impulses.old != null &&
+               (time-impulses.old.time) > FILTER_INTERVAL)
+            impulses.old = impulses.old.next;
+        if (impulses.old == null)
+            impulses.old = impulses.new = {pos, time, next: null};
+        else
+            impulses.new = (impulses.new.next = {pos, time, next: null});
+        if (impulses.new == impulses.old) {
             velocity = [0, 0];
             return false;
         } else {
-            let a = impulses[0];
-            let b = impulses[impulses.length-1];
-            velocity = vdiv((b.time-a.time)/1000, vsub(b.pos,a.pos));
+            velocity = vdiv(vsub(impulses.new.pos,impulses.old.pos),
+                            (impulses.new.time-impulses.old.time)/1000);
             return clamp();
         }
     }
 
-    // update free motion to given time
-    // return if/not there is motion
+    // update free motion to given time,
+    // return true there is motion
     function glide(time) {
-        impulses = [];
+        impulses = {old: null, new: null};
         let moving;
         if (updateTime == null) {
             moving = false;
@@ -242,15 +244,15 @@ let Motion = (() => {
             let deltaSeconds = (time-updateTime)/1000;
             let frictionMultiplier = Math.max(1-(options.friction/FILTER_INTERVAL), 0);
             frictionMultiplier = Math.pow(frictionMultiplier, deltaSeconds*FILTER_INTERVAL);
-            velocity = vmul(frictionMultiplier, velocity);
+            velocity = vmul(velocity, frictionMultiplier);
             moving = clamp();
-            position = vadd(position, vmul(deltaSeconds,velocity));
+            position = vadd(position, vmul(velocity, deltaSeconds));
         }
         updateTime = time;
         return moving;
     }
 
-    function getPosition() { return position }
+    let getPosition = () => position;
 
     return ({ stop, impulse, glide, getPosition });
 })();
@@ -263,7 +265,7 @@ let Scroll = (() => {
         scrollOrigin = [elt.scrollLeft, elt.scrollTop];
     }
     // Move the currently dragged element relative to the starting position.
-    // Return if/not the element actually moved (i.e. if it did not hit a
+    // Return true the element actually moved (i.e. if it did not hit a
     // boundary on both axes).
     function move(pos) {
         if (!elt) return false;
@@ -325,21 +327,23 @@ function stopDrag(ev) {
     }
 }
 
+// === Event handlers ===
+
 function onMouseDown(ev) {
     blockContextMenu = false;
-
     switch (activity) {
-
+    //
     case GLIDE:
         stopGlide(ev);
         // fall through
-
+    //
     case STOP:
         if (!ev.target) {
             debug("target is null, ignoring");
             break; }
         if (ev.button != options.button) {
-            debug("wrong button, ignoring; ev.button="+ev.button+"; options.button="+options.button);
+            debug("wrong button, ignoring; ev.button=%s; options.button=%s",
+                  ev.button, options.button);
             break; }
         if (!KEYS.every(key => options["key_"+key] == ev[key+"Key"])) {
             debug("wrong modkeys, ignoring");
@@ -365,9 +369,9 @@ function onMouseDown(ev) {
             blockContextMenu = true;
         showScrollFix = true;
         break;
-
+    //
     default:
-        debug("WARNING: illegal activity for mousedown: "+activity);
+        console.log("WARNING: illegal activity for mousedown:", activity);
         document.body.style.cursor = "auto";
         Clipboard.unblockPaste();
         ScrollFix.hide();
@@ -375,18 +379,19 @@ function onMouseDown(ev) {
         return onMouseDown(ev);
     }
 }
+addEventListener("mouseup", onMouseUp, true);
 
 function onMouseMove(ev) {
     switch (activity) {
+    //
     case STOP: case GLIDE: break;
-
+    //
     case DRAG:
-        if (ev.button == options.button) {
-            updateDrag(ev);
-            ev.preventDefault();
-        }
+        if (ev.button != options.button) break;
+        updateDrag(ev);
+        ev.preventDefault();
         break;
-
+    //
     case CLICK:
         if (ev.button != options.button) break;
         if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
@@ -396,15 +401,16 @@ function onMouseMove(ev) {
         }
         ev.preventDefault();
         break;
-
+    //
     }
 }
+addEventListener("mousemove", onMouseMove, true);
 
 function onMouseUp(ev) {
     switch (activity) {
-
+    //
     case STOP: break;
-
+    //
     case CLICK:
         debug("unclick, no drag");
         Clipboard.unblockPaste();
@@ -414,35 +420,28 @@ function onMouseUp(ev) {
         if (ev.target) ev.target.focus();
         if (ev.button == options.button) activity = STOP;
         break;
-
+    //
     case DRAG:
         if (ev.button == options.button) { stopDrag(ev); ev.preventDefault(); }
         break;
-
+    //
     case GLIDE:
         stopGlide(ev);
         break;
-
+    //
     }
 }
+addEventListener("mousedown", onMouseDown, true);
 
 function onMouseOut(ev) {
-    switch (activity) {
-    case STOP: case CLICK: case GLIDE: break;
-    case DRAG: if (ev.toElement == null) stopDrag(ev); break;
-    }
+    if (activity === DRAG && ev.toElement == null) stopDrag(ev);
 }
+addEventListener("mouseout", onMouseOut, true);
 
 function onContextMenu(ev) {
-    if (blockContextMenu) {
-        blockContextMenu = false;
-        debug("blocking context menu");
-        ev.preventDefault();
-    }
+    if (!blockContextMenu) return;
+    blockContextMenu = false;
+    debug("blocking context menu");
+    ev.preventDefault();
 }
-
-addEventListener("mousedown",     onMouseDown,   true);
-addEventListener("mouseup",       onMouseUp,     true);
-addEventListener("mousemove",     onMouseMove,   true);
-addEventListener("mouseout",      onMouseOut,    true);
-addEventListener("contextmenu",   onContextMenu, true);
+addEventListener("contextmenu", onContextMenu, true);
