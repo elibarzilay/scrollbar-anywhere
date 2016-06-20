@@ -272,7 +272,7 @@ let Scroll = (() => {
             elt.scrollTop  = orig[1] - dy;
             dx -= orig[0]-elt.scrollLeft;
             dy -= orig[1]-elt.scrollTop;
-            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) break;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return [0, 0];
         }
         return [Math.trunc(dx), Math.trunc(dy)];
     }
@@ -301,17 +301,16 @@ function stopGlide() {
 
 function updateDrag(ev) {
     debug("drag update");
-    let pos = evPos(ev), moving = false;
-    moving = Motion.impulse(pos, ev.timeStamp);
-    Scroll.move(vsub(pos,mouseOrigin));
-    return moving;
+    let pos = evPos(ev);
+    mouseOrigin = vadd(mouseOrigin, Scroll.move(vsub(pos,mouseOrigin)));
+    return Motion.impulse(pos, ev.timeStamp);
 }
 
 function startDrag(ev) {
     debug("drag start");
     activity = DRAG;
     Scroll.start(ev);
-    return updateDrag(ev);
+    updateDrag(ev);
 }
 
 function stopDrag(ev) {
