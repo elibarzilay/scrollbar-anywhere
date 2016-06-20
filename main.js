@@ -31,7 +31,7 @@ let vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
 let vmul  = (v,s) => [s*v[0], s*v[1]];
 let vdiv  = (v,s) => [v[0]/s, v[1]/s];
 let vmag2 = (v)   => v[0]*v[0] + v[1]*v[1];
-let vmag  = (v)   => Math.sqrt(v[0]*v[0] + v[1]*v[1]);
+let vmag  = (v)   => Math.hypot(v[0], v[1]);
 
 let evPos = (ev) => [ev.clientX, ev.clientY];
 
@@ -88,12 +88,16 @@ function isScrollable(elt) {
 }
 
 // Return the first ancestor (or the element itself) that is scrollable
-function findInnermostScrollable(elt) {
+function findScrollables(elt) {
+    let elts = [];
     while (true) {
-        if (elt == document.documentElement) return document.body;
-        if (elt == null || elt == document.body || isScrollable(elt)) return elt;
+        if (elt == document.documentElement) elt = document.body;
+        if (elt == null) break;
+        if (elt == document.body) { elts.push(elt); break; }
+        if (isScrollable(elt)) elts.push(elt);
         elt = elt.parentNode;
     }
+    return elts;
 }
 
 // Don't drag when left-clicking on these elements
@@ -187,7 +191,6 @@ let Motion = (() => {
     let velocity = [0, 0];
     let updateTime = null;
     let impulses = {new: null, old: null};
-
     // ensure velocity is within min and max values,
     // return true if there is motion
     function clamp() {
@@ -200,13 +203,11 @@ let Motion = (() => {
         }
         return true;
     }
-
     // zero velocity
     function stop() {
         impulses = {new: null, old: null};
         velocity = [0, 0];
     }
-
     // impulsively move to given position and time,
     // return true if there is motion
     function impulse(pos, time) {
@@ -228,7 +229,6 @@ let Motion = (() => {
             return clamp();
         }
     }
-
     // update free motion to given time,
     // return true there is motion
     function glide(time) {
@@ -247,28 +247,34 @@ let Motion = (() => {
         updateTime = time;
         return moving;
     }
-
+    //
     let getPosition = () => position;
-
+    //
     return ({ stop, impulse, glide, getPosition });
 })();
 
 let Scroll = (() => {
-    let elt, scrollOrigin;
+    let elts = null, origins;
     // Start dragging
     function start(ev) {
-        elt = findInnermostScrollable(ev.target);
-        scrollOrigin = [elt.scrollLeft, elt.scrollTop];
+        elts = findScrollables(ev.target);
+        origins = elts.map(elt => [elt.scrollLeft, elt.scrollTop]);
     }
-    // Move the currently dragged element relative to the starting position.
-    // Return true the element actually moved (i.e. if it did not hit a
-    // boundary on both axes).
+    // Move the currently dragged elements relative to the starting position.
+    // Return true the leftover movement vector (i.e., [0,0] if we scrolled,
+    // >=1 if everything is scrolled with leftovers so we're at the edge).
     function move(pos) {
-        if (!elt) return false;
-        let x = elt.scrollLeft, y = elt.scrollTop;
-        elt.scrollLeft = scrollOrigin[0] - pos[0];
-        elt.scrollTop  = scrollOrigin[1] - pos[1];
-        return elt.scrollLeft != x || elt.scrollTop != y;
+        if (!elts) return false;
+        let [dx,dy] = pos;
+        for (let i = 0; i < elts.length; i++) {
+            let elt = elts[i], orig = origins[i];
+            elt.scrollLeft = orig[0] - dx;
+            elt.scrollTop  = orig[1] - dy;
+            dx -= orig[0]-elt.scrollLeft;
+            dy -= orig[1]-elt.scrollTop;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) break;
+        }
+        return [Math.trunc(dx), Math.trunc(dy)];
     }
     //
     return ({ start, move });
