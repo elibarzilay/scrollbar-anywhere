@@ -154,6 +154,31 @@ let Clipboard = (() => {
     return ({ blockPaste, unblockPaste });
 })();
 
+// === CoverDiv ===
+// Use this to change the cursor mostly, possibly also avoid events
+// being grabbed unpredictably.
+let CoverDiv = (() => {
+    let elt = null;
+    function createCoverDiv() {
+        elt = document.createElement("div");
+        Object.assign(elt.style, {
+            background: "transparent none",
+            cursor: "url('"+chrome.extension.getURL("cursor.png")+"') 16 16, auto",
+            position: "fixed", display: "block", zIndex: 99999999,
+            top: 0, left: 0, bottom: 0, right: 0,
+            // backgroundColor: "rgba(255,128,255,0.5)",
+        });
+    }
+    function show() {
+        if (elt === null) createCoverDiv();
+        document.body.appendChild(elt);
+    }
+    function hide() {
+        if (elt !== null && elt.parentNode !== null) elt.parentNode.removeChild(elt);
+    }
+    return ({ show, hide })
+})();
+
 // === Motion ===
 
 let Motion = (() => {
@@ -279,15 +304,14 @@ function updateDrag(ev) {
 function startDrag(ev) {
     debug("drag start");
     activity = DRAG;
-    document.body.style.cursor = "-webkit-grabbing";
     Scroll.start(ev);
     return updateDrag(ev);
 }
 
 function stopDrag(ev) {
     debug("drag stop");
-    document.body.style.cursor = "auto";
     Clipboard.unblockPaste();
+    CoverDiv.hide();
     if (updateDrag(ev)) {
         window.setTimeout(updateGlide, TIME_STEP);
         activity = GLIDE;
@@ -340,8 +364,8 @@ function onMouseDown(ev) {
     //
     default:
         console.log("WARNING: illegal activity for mousedown:", activity);
-        document.body.style.cursor = "auto";
         Clipboard.unblockPaste();
+        CoverDiv.hide();
         activity = STOP;
         return onMouseDown(ev);
     }
@@ -363,6 +387,7 @@ function onMouseMove(ev) {
         if (ev.button != options.button) break;
         if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
             if (options.button == RBUTTON) blockContextMenu = true;
+            CoverDiv.show();
             startDrag(ev);
         }
         ev.preventDefault();
@@ -380,6 +405,7 @@ function onMouseUp(ev) {
     case CLICK:
         debug("unclick, no drag");
         Clipboard.unblockPaste();
+        CoverDiv.hide();
         if (ev.button == 0) getSelection().removeAllRanges();
         if (document.activeElement) document.activeElement.blur();
         if (ev.target) ev.target.focus();
