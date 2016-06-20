@@ -191,66 +191,54 @@ let Motion = (() => {
     let velocity = [0, 0];
     let updateTime = null;
     let impulses = {new: null, old: null};
-    // ensure velocity is within min and max values,
+    // set velocity and position, ensure it is within min and max values,
     // return true if there is motion
     function clamp() {
-        let speedSquared = vmag2(velocity);
-        if (speedSquared <= 1) {
-            velocity = [0, 0];
-            return false;
-        } else if (speedSquared > options.speed*options.speed) {
+        let speed2 = vmag2(velocity);
+        if (speed2 < 1) { velocity = [0, 0]; return false; }
+        if (speed2 > options.speed*options.speed)
             velocity = vmul(velocity, options.speed/vmag(velocity));
-        }
         return true;
+    }
+    function start() {
+        if (impulses.new == impulses.old) { velocity = [0, 0]; return false; }
+        position = impulses.new.pos;
+        updateTime = impulses.new.time;
+        velocity = vdiv(vsub(impulses.new.pos,impulses.old.pos),
+                        (impulses.new.time-impulses.old.time)/1000);
+        return clamp();
     }
     // zero velocity
     function stop() {
         impulses = {new: null, old: null};
         velocity = [0, 0];
     }
-    // impulsively move to given position and time,
-    // return true if there is motion
+    // impulsively move to given position and time
     function impulse(pos, time) {
-        position = pos;
-        updateTime = time;
-        while (impulses.old != null &&
-               (time-impulses.old.time) > FILTER_INTERVAL)
+        while (impulses.old != null && (time-impulses.old.time) > FILTER_INTERVAL)
             impulses.old = impulses.old.next;
         if (impulses.old == null)
             impulses.old = impulses.new = {pos, time, next: null};
         else
             impulses.new = (impulses.new.next = {pos, time, next: null});
-        if (impulses.new == impulses.old) {
-            velocity = [0, 0];
-            return false;
-        } else {
-            velocity = vdiv(vsub(impulses.new.pos,impulses.old.pos),
-                            (impulses.new.time-impulses.old.time)/1000);
-            return clamp();
-        }
     }
-    // update free motion to given time,
-    // return true there is motion
+    // update free motion to given time, return true there is motion
     function glide(time) {
         impulses = {old: null, new: null};
-        let moving;
-        if (updateTime == null) {
-            moving = false;
-        } else {
-            let deltaSeconds = (time-updateTime)/1000;
-            let frictionMultiplier = Math.max(1-(options.friction/FILTER_INTERVAL), 0);
-            frictionMultiplier = Math.pow(frictionMultiplier, deltaSeconds*FILTER_INTERVAL);
-            velocity = vmul(velocity, frictionMultiplier);
-            moving = clamp();
-            position = vadd(position, vmul(velocity, deltaSeconds));
-        }
+        if (updateTime == null) { updateTime = time; return false; }
+        let dsecs = (time-updateTime)/1000;
+        let frictionMul = Math.max(1-(options.friction/FILTER_INTERVAL), 0);
+        frictionMul = Math.pow(frictionMul, dsecs*FILTER_INTERVAL);
+        velocity = vmul(velocity, frictionMul);
+        let moving = clamp();
+        position = vadd(position, vmul(velocity, dsecs));
         updateTime = time;
         return moving;
     }
     //
     let getPosition = () => position;
     //
-    return ({ stop, impulse, glide, getPosition });
+    return ({ start, stop, impulse, glide, getPosition });
 })();
 
 let Scroll = (() => {
@@ -287,9 +275,9 @@ let mouseOrigin = null;
 function updateGlide() {
     if (activity != GLIDE) return;
     debug("glide update");
-    let moving = Motion.glide(performance.now());
-    moving = Scroll.move(vsub(Motion.getPosition(),mouseOrigin)) && moving;
-    if (moving) setTimeout(updateGlide, TIME_STEP);
+    if (Motion.glide(performance.now()) &&
+        Scroll.move(vsub(Motion.getPosition(),mouseOrigin)))
+        setTimeout(updateGlide, TIME_STEP);
     else stopGlide();
 }
 
@@ -303,7 +291,7 @@ function updateDrag(ev) {
     debug("drag update");
     let pos = evPos(ev);
     mouseOrigin = vadd(mouseOrigin, Scroll.move(vsub(pos,mouseOrigin)));
-    return Motion.impulse(pos, ev.timeStamp);
+    Motion.impulse(pos, ev.timeStamp);
 }
 
 function startDrag(ev) {
@@ -317,7 +305,8 @@ function stopDrag(ev) {
     debug("drag stop");
     Clipboard.unblockPaste();
     CoverDiv.hide();
-    if (updateDrag(ev)) {
+    updateDrag(ev);
+    if (Motion.start()) {
         window.setTimeout(updateGlide, TIME_STEP);
         activity = GLIDE;
     } else {
