@@ -131,40 +131,6 @@ function hasRoleButtonAttribute(elt) {
            elt.attributes.role.value === "button";
 }
 
-// ===== Clipboard Stuff =====
-// Block the next paste event if a text element is active. This is a
-// workaround for middle-click paste not being preventable on Linux.
-
-let Clipboard = (() => {
-    let blockElement = null;
-    function isPastable(elt) {
-        return elt && elt.tagName == "INPUT" || elt.tagName == "TEXTAREA";
-    }
-    function blockPaste() {
-        let elt = document.activeElement;
-        if (blockElement == elt) return;
-        if (blockElement) unblockPaste();
-        if (isPastable(elt)) {
-            debug("blocking paste for active text element", elt);
-            blockElement = elt;
-            elt.addEventListener("paste", onPaste, true);
-        }
-    }
-    function unblockPaste() {
-        if (!blockElement) return;
-        debug("unblocking paste", blockElement);
-        blockElement.removeEventListener("paste", onPaste, true);
-        blockElement = null;
-    }
-    function onPaste(ev) {
-        let elt = ev.target;
-        if (!elt) return;
-        if (blockElement == elt) { blockElement = null; blockEvent(ev); }
-        elt.removeEventListener("paste", onPaste, true);
-    }
-    return ({ blockPaste, unblockPaste });
-})();
-
 // ===== CoverDiv =====
 // Use this to change the cursor mostly, possibly also avoid events
 // being grabbed unpredictably.
@@ -311,7 +277,6 @@ function startDrag(ev) {
 
 function stopDrag(ev) {
     debug("drag stop");
-    Clipboard.unblockPaste();
     CoverDiv.hide();
     updateDrag(ev);
     if (Motion.start()) {
@@ -357,8 +322,6 @@ function onMouseDown(ev) {
         mouseOrigin = evPos(ev);
         Motion.impulse(mouseOrigin, ev.timeStamp);
         blockEvent(ev);
-        if (ev.button == MBUTTON && ev.target != document.activeElement)
-            Clipboard.blockPaste()
         if (ev.button == RBUTTON &&
             (navigator.platform.match(/Mac/) || navigator.platform.match(/Linux/)))
             blockContextMenu = true;
@@ -366,7 +329,6 @@ function onMouseDown(ev) {
     //
     default:
         console.log("WARNING: illegal activity for mousedown:", activity);
-        Clipboard.unblockPaste();
         CoverDiv.hide();
         activity = STOP;
         return onMouseDown(ev);
@@ -406,7 +368,6 @@ function onMouseUp(ev) {
     //
     case CLICK:
         debug("unclick, no drag");
-        Clipboard.unblockPaste();
         CoverDiv.hide();
         if (ev.button == 0) getSelection().removeAllRanges();
         if (document.activeElement) document.activeElement.blur();
