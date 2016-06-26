@@ -1,6 +1,6 @@
 "use strict";
 
-// === Options ===
+// ===== Options =====
 
 let options = ({ // default
     button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
@@ -17,15 +17,15 @@ chrome.storage.onChanged.addListener((changes, _) =>
     setOptions(changes.options && changes.options.newValue));
 chrome.storage.sync.get("options", val => setOptions(val && val.options));
 
-// === Debugging ===
+// ===== Utilities =====
 
+// Debugging
 function debug(str, ...args) {
     if (!options.debug) return;
     console.debug("SA: "+str, ...args);
 }
 
-// === Vector math and other utilities ===
-
+// Vector math
 let vadd  = (a,b) => [a[0]+b[0], a[1]+b[1]];
 let vsub  = (a,b) => [a[0]-b[0], a[1]-b[1]];
 let vmul  = (v,s) => [s*v[0], s*v[1]];
@@ -131,9 +131,10 @@ function hasRoleButtonAttribute(elt) {
            elt.attributes.role.value === "button";
 }
 
-// === Clipboard Stuff ===
+// ===== Clipboard Stuff =====
 // Block the next paste event if a text element is active. This is a
 // workaround for middle-click paste not being preventable on Linux.
+
 let Clipboard = (() => {
     let blockElement = null;
     function isPastable(elt) {
@@ -164,9 +165,10 @@ let Clipboard = (() => {
     return ({ blockPaste, unblockPaste });
 })();
 
-// === CoverDiv ===
+// ===== CoverDiv =====
 // Use this to change the cursor mostly, possibly also avoid events
 // being grabbed unpredictably.
+
 let CoverDiv = (() => {
     let elt = null;
     function createCoverDiv() {
@@ -189,7 +191,7 @@ let CoverDiv = (() => {
     return ({ show, hide })
 })();
 
-// === Motion ===
+// ===== Motion =====
 
 let Motion = (() => {
     const FILTER_INTERVAL = 100;
@@ -320,7 +322,7 @@ function stopDrag(ev) {
     }
 }
 
-// === Event handlers ===
+// ===== Event handlers =====
 
 function onMouseDown(ev) {
     blockContextMenu = false;
