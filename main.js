@@ -35,6 +35,12 @@ let vmag  = (v)   => Math.hypot(v[0], v[1]);
 
 let evPos = (ev) => [ev.clientX, ev.clientY];
 
+// Completely block an event from going further
+function blockEvent(ev) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+}
+
 // Test if the given point is directly over text
 let testElt = document.createElement("SPAN");
 function isOverText(ev) {
@@ -152,7 +158,7 @@ let Clipboard = (() => {
     function onPaste(ev) {
         let elt = ev.target;
         if (!elt) return;
-        if (blockElement == elt) { blockElement = null; ev.preventDefault(); }
+        if (blockElement == elt) { blockElement = null; blockEvent(ev); }
         elt.removeEventListener("paste", onPaste, true);
     }
     return ({ blockPaste, unblockPaste });
@@ -348,7 +354,7 @@ function onMouseDown(ev) {
         activity = CLICK;
         mouseOrigin = evPos(ev);
         Motion.impulse(mouseOrigin, ev.timeStamp);
-        ev.preventDefault();
+        blockEvent(ev);
         if (ev.button == MBUTTON && ev.target != document.activeElement)
             Clipboard.blockPaste()
         if (ev.button == RBUTTON &&
@@ -374,7 +380,7 @@ function onMouseMove(ev) {
     case DRAG:
         if (ev.button != options.button) break;
         updateDrag(ev);
-        ev.preventDefault();
+        blockEvent(ev);
         break;
     //
     case CLICK:
@@ -384,7 +390,7 @@ function onMouseMove(ev) {
             CoverDiv.show();
             startDrag(ev);
         }
-        ev.preventDefault();
+        blockEvent(ev);
         break;
     //
     }
@@ -407,7 +413,7 @@ function onMouseUp(ev) {
         break;
     //
     case DRAG:
-        if (ev.button == options.button) { stopDrag(ev); ev.preventDefault(); }
+        if (ev.button == options.button) { stopDrag(ev); blockEvent(ev); }
         break;
     //
     case GLIDE:
@@ -427,6 +433,6 @@ function onContextMenu(ev) {
     if (!blockContextMenu) return;
     blockContextMenu = false;
     debug("blocking context menu");
-    ev.preventDefault();
+    blockEvent(ev);
 }
 addEventListener("contextmenu", onContextMenu, true);
