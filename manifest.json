@@ -1,16 +1,16 @@
 {
-    "name": "Drag to Scroll",
-    "version": "1.0",
-    "description": "Drag the mouse to scroll the page.",
-    "icons": {"128": "icon.png"},
-    "content_scripts": [{
-        "matches": ["<all_urls>"],
-        "js": ["main.js"],
-        "run_at": "document_start",
-        "all_frames": true}],
-    "web_accessible_resources": ["cursor.png"],
-    "permissions": ["storage"],
-    "options_page": "config.html",
-    "manifest_version": 2,
-    "minimum_chrome_version": "49"
+  "name": "Drag to Scroll",
+  "version": "1.0",
+  "description": "Drag the mouse to scroll the page.",
+  "icons": {"128": "icon.png"},
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["main.js"],
+    "run_at": "document_start",
+    "all_frames": true}],
+  "web_accessible_resources": ["cursor.png"],
+  "permissions": ["storage"],
+  "options_page": "config.html",
+  "manifest_version": 2,
+  "minimum_chrome_version": "49"
 }

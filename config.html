@@ -40,47 +40,56 @@
       <table border="0">
         <tr>
           <td style="width:100px">
-            <input id="key_shift" type="checkbox" /> <label for="key_shift">Shift</label></td>
-          <td><input id="key_ctrl"  type="checkbox" /> <label for="key_ctrl">Ctrl</label></td>
-        </tr>
-        <tr>
-          <td><input id="key_alt"   type="checkbox" /> <label for="key_alt">Alt</label></td>
-          <td><input id="key_meta"  type="checkbox" /> <label for="key_meta">Meta/Win/Tux</label></td>
+            <input id="key_shift" type="checkbox" />
+            <label for="key_shift">Shift</label>
+          </td><td>
+            <input id="key_ctrl"  type="checkbox" />
+            <label for="key_ctrl">Ctrl</label>
+          </td>
+        </tr><tr>
+          <td>
+            <input id="key_alt"   type="checkbox" />
+            <label for="key_alt">Alt</label>
+          </td><td>
+            <input id="key_meta"  type="checkbox" />
+            <label for="key_meta">Win</label>
+          </td>
         </tr>
       </table>
-      <div class="tip">Tip: any unchecked keys will <strong>disable</strong> dragging when held down</div>
+      <div class="tip">
+        Tip: any unchecked keys will <strong>disable</strong>
+        dragging when held down
+      </div>
     </td>
   </tr>
   <tr>
     <td></td>
     <td>
-      <label for="notext"><input id="notext" type="checkbox"/> Don't drag when clicking on text</label><br/>
+      <label for="notext"><input id="notext" type="checkbox"/>
+        Don't drag when clicking on text
+      </label><br/>
     </td>
-  </tr>
-  <tr>
+  </tr><tr>
     <td align="right">
       <h2>Top Speed</h2>
       The maximum speed at which the page will glide after you release it.
       Enter 0 to disable gliding.
-    </td>
-    <td>
+    </td><td>
       <input id="speed" type="text" style="width:60px" />
       <sub>pixels per second</sub>
     </td>
-  </tr>
-  <tr>
+  </tr><tr>
     <td align="right">
       <h2>Friction</h2>
       How quickly the page will come to a stop when gliding.
-    </td>
-    <td>
+    </td><td>
       <input id="friction" type="text" style="width:60px" />
       <sub>velocities per second</sub>
     </td>
-  </tr>
-  <tr>
+  </tr><tr>
     <td></td>
-    <td><input id="debug" type="checkbox" />
+    <td>
+      <input id="debug" type="checkbox" />
       <label for="debug">show debug noise in console</label>
     </td>
   </tr>
@@ -99,4 +108,5 @@
   which in turn is based on <a href="https://chrome.google.com/extensions/detail/ljecomdaijmibecakcpjadigpfkollbh">Wet Banana</a>
   and inspired by <a href="https://addons.mozilla.org/en-US/firefox/addon/scrollbaranywhere/">Scrollbar Anywhere for Firefox</a>.
 </p>
+
 </body></html>
