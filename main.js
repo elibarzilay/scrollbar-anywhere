@@ -10,10 +10,11 @@ let options = ({ // defaults
 });
 const KEYS = Object.keys(options).filter(x => x.endsWith("Key"));
 const BOOLEAN_OPTS =
-  Object.keys(options).filter(x => (typeof options[x]) === "boolean")
+  Object.keys(options).filter(x => (typeof options[x]) === "boolean");
 
 function setOptions(o) {
-  if (o) { Object.assign(options, o); debug("Options: %o", options); }
+  if (o) { Object.assign(options, o);
+           debug("Options: %o", () => JSON.stringify(options)); }
 }
 chrome.storage.onChanged.addListener((changes, _) =>
   setOptions(changes.options && changes.options.newValue));
@@ -24,7 +25,8 @@ chrome.storage.sync.get("options", val => setOptions(val && val.options));
 // Debugging
 function debug(str, ...args) {
   if (!options.debug) return;
-  console.debug(`D2S: ${str}`, ...args);
+  console.debug(`D2S: ${str}`, ...(args.map(x =>
+    (typeof x === "function" && x.length == 0) ? x() : x)));
 }
 
 // Vector math

@@ -1,38 +1,28 @@
 "use strict";
 
-let $ = document.getElementById.bind(document);
+let getElt = document.getElementById.bind(document);
 
-function error(msg) {
-  $("message").innerHTML += "<div style='color:red;'>"+msg+"</div>";
+function forallOptions(cb) {
+  for (let k in options) {
+    let inp = getElt(k); if (!inp) continue; // in case of junk in settings
+    cb(k, inp);
+  }
 }
 
 function save() {
-  let x;
-
-  $("message").innerHTML = "";
-
-  x = $("button").selectedIndex;
-  if (x < 0 || x > 2) error("Somehow, you broke the button field");
-  else options.button = x;
-
-  x = $("speed").value - 0;
-  if (isNaN(x) || x < 0) error("Top speed must be a non-negative number");
-  else options.speed = x;
-
-  x = $("friction").value - 0;
-  if (isNaN(x) || x < 0) error("Friction must be a positive number");
-  else options.friction = x;
-
-  for (let k of BOOLEAN_OPTS) options[k] = $(k).checked;
-
+  forallOptions((k, inp) =>
+    options[k] = (BOOLEAN_OPTS.indexOf(k) >= 0)    ? inp.checked
+               : (inp.selectedIndex !== undefined) ? inp.selectedIndex
+               :                                     Number(inp.value));
   chrome.storage.sync.set({options});
 }
 
 function load() {
-  for (let k of BOOLEAN_OPTS) $(k).checked = options[k];
-  $("button").selectedIndex = options.button;
-  $("speed").value    = options.speed;
-  $("friction").value = options.friction;
+  forallOptions((k, inp) => {
+    if (BOOLEAN_OPTS.indexOf(k) >= 0)         inp.checked       = options[k];
+    else if (inp.selectedIndex !== undefined) inp.selectedIndex = options[k];
+    else                                      inp.value         = options[k];
+  });
 }
 
 let updateTimeoutId;
@@ -43,26 +33,19 @@ function onUpdate(ev) {
 }
 
 function start() {
-  $("button").addEventListener("change", onUpdate, false);
-  for (let k of BOOLEAN_OPTS) $(k).addEventListener("change", onUpdate, false);
-
-  ["speed","friction"].forEach(id =>
-    ["change", "keydown", "mousedown", "blur"].forEach(evname =>
-      $(id).addEventListener(evname, onUpdate, true)));
-  let footerText = ["<i>Here's a bunch of text to scroll:</i>", ""];
+  forallOptions((k, inp) => inp.addEventListener("change", onUpdate, false));
+  let text = ["<i>Here's a bunch of text to scroll:</i>", ""];
   let beers = 99;
-  function bottles(n, text) {
-    footerText.push((n==0 ? "no more" : n)+" bottle"+(n==1?"":"s")
-                    + " of beer"+text);
-  }
+  let bottles = (n, rest) =>
+    `${n==0 ? "no more" : n} bottle${n==1?"":"s"} of beer${rest}`;
   while (beers > 0) {
-    bottles(beers, " on the wall,");
-    bottles(beers, "!");
-    footerText.push("Take one down, pass it around");
-    bottles(--beers, " on the wall.");
-    footerText.push("");
+    text.push(bottles(beers, " on the wall,"),
+              bottles(beers, "!"),
+              "Take one down, pass it around",
+              bottles(--beers, " on the wall."),
+              "");
   }
-  $("long_footer").innerHTML = footerText.join("<br>");
+  getElt("long_footer").innerHTML = text.join("<br>");
 }
 
 function loadAndStart(ev) {

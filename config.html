@@ -2,108 +2,77 @@
 <head>
   <title>Drag to Scroll</title>
   <style>
-    body { font-family: sans-serif; text-align: center; font-size: 100%; }
-    h2 { margin: 0; }
-    .tip {
-      font-style: italic;
-      font-size: 80%;
-      width: 200px;
-      margin-top: 16px;
-    }
-    a:visited { color: blue; }
+    body { font-family: sans-serif; text-align: center; font-size: 100%;
+           background-color: black; color: #ccc; }
+    table { width: 75%; margin: 0 auto; }
+    td { width: 50%; vertical-align: top; }
+    td:first-child { text-align: right; font-size: 125%; font-weight: bolder; }
+    td:nth-child(2) { padding-top: 0.5ex; }
+    input[type=checkbox] { display: none; }
+    label { white-space: nowrap; font-weight: bolder; margin-right: 1em;
+            color: #755; transition: color 0.1s, text-shadow 0.5s; }
+    label.dependent { display: block; font-size: 80%; padding-top: 1ex; }
+    input:checked + label { color: #6fa;
+                            text-shadow: 0 0 10px #4f8, 0 0 30px #4f8; }
+    h1 { margin: 0; font-size: 125%; }
+    hr { height: 5px; background-color: #666; border: none; margin: 4ex; }
+    a { color: #cc8; font-weight: bold; text-decoration: none;
+        transition: all 0.4s; }
+    a:active, a:hover { color: ee9; background-color: #444; }
+    .tip { color: #aaa; font-style: italic; font-size: 80%;
+           margin: 0.5ex 0 0 1em; }
   </style>
   <script src="main.js" type="text/javascript"></script>
   <script src="config.js" type="text/javascript"></script>
 </head>
 <body>
 
-<table border="0" cellspacing="16" style="width:600px" align="center">
-  <tr>
-    <td align="right">
-      <h2>Button</h2>
-      Which button will you hold down to drag?
-    </td>
-    <td style="width:300px">
-      <select id="button">
-        <option>Left</option>
-        <option>Middle</option>
-        <option>Right</option>
-      </select>
-    </td>
-  </tr>
-  <tr>
-    <td align="right">
-      <h2>Keys</h2>
-      Which extra keys will you hold down?
-    </td>
-    <td>
-      <table border="0">
-        <tr>
-          <td style="width:100px">
-            <input id="shiftKey" type="checkbox" />
-            <label for="shiftKey">Shift</label>
-          </td><td>
-            <input id="ctrlKey" type="checkbox" />
-            <label for="ctrlKey">Ctrl</label>
-          </td>
-        </tr><tr>
-          <td>
-            <input id="altKey" type="checkbox" />
-            <label for="altKey">Alt</label>
-          </td><td>
-            <input id="metaKey" type="checkbox" />
-            <label for="metaKey">Win/Meta</label>
-          </td>
-        </tr>
-      </table>
-      <div class="tip">
-        Tip: any unchecked keys will <strong>disable</strong>
-        dragging when held down
-      </div>
-    </td>
-  </tr>
-  <tr>
-    <td></td>
-    <td>
-      <label for="notext"><input id="notext" type="checkbox"/>
-        Don't drag when clicking on text
-      </label><br/>
-    </td>
-  </tr><tr>
-    <td align="right">
-      <h2>Top Speed</h2>
-      The maximum speed at which the page will glide after you release it.
-      Enter 0 to disable gliding.
-    </td><td>
-      <input id="speed" type="text" style="width:60px" />
-      <sub>pixels per second</sub>
-    </td>
-  </tr><tr>
-    <td align="right">
-      <h2>Friction</h2>
-      How quickly the page will come to a stop when gliding.
-    </td><td>
-      <input id="friction" type="text" style="width:60px" />
-      <sub>velocities per second</sub>
-    </td>
-  </tr><tr>
-    <td></td>
-    <td>
-      <input id="debug" type="checkbox" />
-      <label for="debug">show debug noise in console</label>
-    </td>
-  </tr>
-  <tr>
-    <td colspan="2" id="message" align="center" height="24"></td>
-  </tr>
-</table>
-<br/>
-<br/>
-<br/>
+<table border="0" cellspacing="16"><tr>
+  <td>Mouse Button</td><td>
+    <select id="button">
+      <option>Left</option>
+      <option>Middle</option>
+      <option>Right</option>
+    </select><br>
+    <input id="notext" type="checkbox" />
+    <label for="notext" class="dependent">Don't drag on text</label>
+  </td>
+</tr><tr>
+  <td>Modifier Keys</td><td>
+    <input id="shiftKey" type="checkbox" /><label for="shiftKey">Shift</label>
+    <input id="ctrlKey" type="checkbox" /><label for="ctrlKey">Ctrl</label>
+    <input id="altKey" type="checkbox" /><label for="altKey">Alt</label>
+    <input id="metaKey" type="checkbox" /><label for="metaKey">Win/Meta</label>
+    <div class="tip">(You can use disabled keys to prevent scrolling.)</div>
+  </td>
+</tr><tr>
+  <td>Max Gliding Speed</td><td>
+    <input id="speed" type="range" value="20000" min="0" max="40000"
+           list="speeds" style="width: 100%;" />
+    <datalist id="speeds">
+      <option>10000</option><option>20000</option><option>30000</option>
+    </datalist>
+  </td>
+</tr><tr>
+  <td>Glide Friction</td><td>
+    <input id="friction" type="range" value="5" min="0" max="12" step="0.01"
+           list="frictions" style="width: 100%;" />
+    <datalist id="frictions">
+      <option>1</option><option>3</option><option>5</option>
+      <option>7</option><option>9</option><option>11</option>
+    </datalist>
+  </td>
+</tr><tr>
+  <td>Debugging</td><td>
+    <input id="debug" type="checkbox" /><label for="debug">Debugging log in console</label>
+  </td>
+</tr></table>
+
+<hr/>
 <p id="long_footer"></p>
-<br/>
-<br/>
-<p>
+
+<hr/>
+<p style="font-size: 62.5%; font-style: italic;">
   Based on <a href="https://chrome.google.com/webstore/detail/scrollbar-anywhere/namcaplenodjnggbfkbopdbfngponici">Scrollbar Anywhere</a>,
   which in turn is based on <a href="https://chrome.google.com/extensions/detail/ljecomdaijmibecakcpjadigpfkollbh">Wet Banana</a>
   and inspired by <a href="https://addons.mozilla.org/en-US/firefox/addon/scrollbaranywhere/">Scrollbar Anywhere for Firefox</a>.
