@@ -106,30 +106,7 @@ function findScrollables(elt) {
   return elts;
 }
 
-// Don't drag when left-clicking on these elements
-const LBUTTON_OVERRIDE_TAGS = ["A", "INPUT", "SELECT", "TEXTAREA", "BUTTON",
-                               "LABEL", "OBJECT", "EMBED"];
-
-const LBUTTON=0, MBUTTON=1, RBUTTON=2;
-const TIME_STEP = 10;
-
-const STOP=0, CLICK=1, DRAG=2, GLIDE=3;
-
-function hasOverrideAncestor(elt) {
-  while (elt != null) {
-    if (options.button == LBUTTON
-        && (LBUTTON_OVERRIDE_TAGS.indexOf(elt.tagName)>=0
-            || hasRoleButtonAttribute(elt)))
-      return true;
-    elt = elt.parentNode;
-  }
-  return false;
-}
-
-function hasRoleButtonAttribute(elt) {
-  return elt.attributes && elt.attributes.role &&
-         elt.attributes.role.value === "button";
-}
+const TIME_STEP = 10, STOP = 0, CLICK = 1, DRAG = 2, GLIDE = 3;
 
 // ===== CoverDiv =====
 // Use this to change the cursor mostly, possibly also avoid events
@@ -309,9 +286,6 @@ function onMouseDown(ev) {
     if (!KEYS.every(key => options["key_"+key] == ev[key+"Key"])) {
       debug("wrong modkeys, ignoring");
       break; }
-    if (hasOverrideAncestor(ev.target)) {
-      debug("forbidden target element, ignoring", ev);
-      break; }
     if (isOverScrollbar(ev)) {
       debug("detected scrollbar click, ignoring", ev);
       break; }
@@ -323,9 +297,7 @@ function onMouseDown(ev) {
     mouseOrigin = evPos(ev);
     Motion.impulse(mouseOrigin, ev.timeStamp);
     blockEvent(ev);
-    if (ev.button == RBUTTON &&
-        (navigator.platform.match(/Mac/) || navigator.platform.match(/Linux/)))
-      blockContextMenu = true;
+    if (ev.button == 2) blockContextMenu = true;
     break;
   //
   default:
@@ -351,7 +323,7 @@ function onMouseMove(ev) {
   case CLICK:
     if (ev.button != options.button) break;
     if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
-      if (options.button == RBUTTON) blockContextMenu = true;
+      if (options.button == 2) blockContextMenu = true;
       CoverDiv.show();
       startDrag(ev);
     }
