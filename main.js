@@ -2,13 +2,15 @@
 
 // ===== Options =====
 
-let options = ({ // default
+let options = ({ // defaults
   button: 2, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
-  speed: 20000, friction: 6,
+  speed: 20000, friction: 5,
   notext: false,
   debug: false
 });
-const KEYS = ["shift", "ctrl", "alt", "meta"];
+const KEYS = Object.keys(options).filter(x => x.endsWith("Key"));
+const BOOLEAN_OPTS =
+  Object.keys(options).filter(x => (typeof options[x]) === "boolean")
 
 function setOptions(o) {
   if (o) { Object.assign(options, o); debug("Options: %o", options); }
@@ -22,7 +24,7 @@ chrome.storage.sync.get("options", val => setOptions(val && val.options));
 // Debugging
 function debug(str, ...args) {
   if (!options.debug) return;
-  console.debug("SA: "+str, ...args);
+  console.debug(`D2S: ${str}`, ...args);
 }
 
 // Vector math
@@ -283,7 +285,7 @@ function onMouseDown(ev) {
       debug("wrong button, ignoring; ev.button=%s; options.button=%s",
             ev.button, options.button);
       break; }
-    if (!KEYS.every(key => options[key+"Key"] == ev[key+"Key"])) {
+    if (!KEYS.every(key => options[key] == ev[key])) {
       debug("wrong modkeys, ignoring");
       break; }
     if (isOverScrollbar(ev)) {

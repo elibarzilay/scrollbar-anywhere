@@ -15,29 +15,24 @@ function save() {
   if (x < 0 || x > 2) error("Somehow, you broke the button field");
   else options.button = x;
 
-  x = $("speed").value-0;
-  if (isNaN(x) || x < 0) error("Top speed must be a positive number or zero");
+  x = $("speed").value - 0;
+  if (isNaN(x) || x < 0) error("Top speed must be a non-negative number");
   else options.speed = x;
 
-  x = $("friction").value-0;
+  x = $("friction").value - 0;
   if (isNaN(x) || x < 0) error("Friction must be a positive number");
   else options.friction = x;
 
-  for (let k of KEYS) options[k+"Key"] = $(k+"Key").checked;
-
-  options.notext = $("notext").checked;
-  options.debug = $("debug").checked;
+  for (let k of BOOLEAN_OPTS) options[k] = $(k).checked;
 
   chrome.storage.sync.set({options});
 }
 
 function load() {
+  for (let k of BOOLEAN_OPTS) $(k).checked = options[k];
   $("button").selectedIndex = options.button;
-  for (let k of KEYS) $(k+"Key").checked = options[k+"Key"];
   $("speed").value    = options.speed;
   $("friction").value = options.friction;
-  $("notext").checked = options.notext;
-  $("debug").checked  = options.debug;
 }
 
 let updateTimeoutId;
@@ -48,10 +43,8 @@ function onUpdate(ev) {
 }
 
 function start() {
-  ["button", "notext", "debug"].forEach(id =>
-    $(id).addEventListener("change",onUpdate,false));
-
-  for (let k of KEYS) $(k+"Key").addEventListener("change", onUpdate, false);
+  $("button").addEventListener("change", onUpdate, false);
+  for (let k of BOOLEAN_OPTS) $(k).addEventListener("change", onUpdate, false);
 
   ["speed","friction"].forEach(id =>
     ["change", "keydown", "mousedown", "blur"].forEach(evname =>
