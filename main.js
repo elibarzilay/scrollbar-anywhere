@@ -311,7 +311,7 @@ function onMouseDown(ev) {
     return onMouseDown(ev);
   }
 }
-addEventListener("mouseup", onMouseUp, true);
+addEventListener("mousedown", onMouseDown, true);
 
 function onMouseMove(ev) {
   switch (activity) {
@@ -347,6 +347,7 @@ function onMouseUp(ev) {
     debug("unclick, no drag");
     CoverDiv.hide();
     if (ev.button == 0) getSelection().removeAllRanges();
+    if (ev.button == 2) blockContextMenu = false;
     if (document.activeElement) document.activeElement.blur();
     if (ev.target) ev.target.focus();
     if (ev.button == options.button) activity = STOP;
@@ -362,7 +363,7 @@ function onMouseUp(ev) {
   //
   }
 }
-addEventListener("mousedown", onMouseDown, true);
+addEventListener("mouseup", onMouseUp, true);
 
 function onMouseOut(ev) {
   if (activity === DRAG && ev.toElement == null) stopDrag(ev);
