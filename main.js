@@ -3,7 +3,7 @@
 // ===== Options =====
 
 let options = ({ // default
-  button: 2, key_shift: false, key_ctrl: false, key_alt: false, key_meta: false,
+  button: 2, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
   speed: 20000, friction: 6,
   notext: false,
   debug: false
@@ -283,7 +283,7 @@ function onMouseDown(ev) {
       debug("wrong button, ignoring; ev.button=%s; options.button=%s",
             ev.button, options.button);
       break; }
-    if (!KEYS.every(key => options["key_"+key] == ev[key+"Key"])) {
+    if (!KEYS.every(key => options[key+"Key"] == ev[key+"Key"])) {
       debug("wrong modkeys, ignoring");
       break; }
     if (isOverScrollbar(ev)) {

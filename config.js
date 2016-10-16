@@ -23,7 +23,7 @@ function save() {
   if (isNaN(x) || x < 0) error("Friction must be a positive number");
   else options.friction = x;
 
-  for (let k of KEYS) options["key_"+k] = $("key_"+k).checked;
+  for (let k of KEYS) options[k+"Key"] = $(k+"Key").checked;
 
   options.notext = $("notext").checked;
   options.debug = $("debug").checked;
@@ -33,7 +33,7 @@ function save() {
 
 function load() {
   $("button").selectedIndex = options.button;
-  for (let k of KEYS) $("key_"+k).checked = options["key_"+k];
+  for (let k of KEYS) $(k+"Key").checked = options[k+"Key"];
   $("speed").value    = options.speed;
   $("friction").value = options.friction;
   $("notext").checked = options.notext;
@@ -51,7 +51,7 @@ function start() {
   ["button", "notext", "debug"].forEach(id =>
     $(id).addEventListener("change",onUpdate,false));
 
-  for (let k of KEYS) $("key_"+k).addEventListener("change", onUpdate, false);
+  for (let k of KEYS) $(k+"Key").addEventListener("change", onUpdate, false);
 
   ["speed","friction"].forEach(id =>
     ["change", "keydown", "mousedown", "blur"].forEach(evname =>
