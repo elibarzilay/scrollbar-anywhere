@@ -60,8 +60,10 @@ function isOverText(ev) {
       if (testElt.isSameNode(document.elementFromPoint(ev.clientX, ev.clientY)))
         return true;
     } finally {
-      if (child.isSameNode(testElt.firstChild)) testElt.removeChild(child);
-      if (testElt.isSameNode(parent.childNodes[i])) parent.replaceChild(child, testElt);
+      if (child.isSameNode(testElt.firstChild))
+        testElt.removeChild(child);
+      if (testElt.isSameNode(parent.childNodes[i]))
+        parent.replaceChild(child, testElt);
     }
   }
   return false;
