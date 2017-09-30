@@ -2,19 +2,28 @@
 
 // ===== Options =====
 
-let options = ({ // defaults
-  button: 2, shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
+let options = { // defaults
+  lButton: false, mButton: false, rButton: true,
+  shiftKey: false, ctrlKey: false, altKey: false, metaKey: false,
   speed: 20000, friction: 5,
   notext: false,
   debug: false
-});
+};
+let cOptions = {};
+let addComputedOptions = () =>
+  Object.assign(cOptions, {buttons: (options.lButton ? 1 : 0) +
+                                    (options.rButton ? 2 : 0) +
+                                    (options.mButton ? 4 : 0)});
+addComputedOptions();
 const KEYS = Object.keys(options).filter(x => x.endsWith("Key"));
 const BOOLEAN_OPTS =
   Object.keys(options).filter(x => (typeof options[x]) === "boolean");
 
 function setOptions(o) {
   if (o) { Object.assign(options, o);
-           debug("Options: %o", () => JSON.stringify(options)); }
+           addComputedOptions();
+           debug("Options:", options);
+           debug("Computed Options:", cOptions); }
 }
 chrome.storage.onChanged.addListener((changes, _) =>
   setOptions(changes.options && changes.options.newValue));
@@ -74,19 +83,18 @@ function isOverText(ev) {
 // The body element is treated separately since the visible size is
 // fetched differently depending on the doctype.
 function isOverScrollbar(ev) {
-  let t = ev.target == document.documentElement ? document.body : ev.target;
-  if (t == document.body) {
-    let d = document.documentElement, cW, cH;
-    if (d.scrollHeight == d.clientHeight && d.scrollHeight == d.offsetHeight) {
-      // Guessing it's a no doctype document
-      cW = t.clientWidth; cH = t.clientHeight;
-    } else {
-      cW = d.clientWidth; cH = d.clientHeight;
-    }
-    return (ev.offsetX - t.scrollLeft >= cW || ev.offsetY - t.scrollTop >= cH);
-  } else return isScrollable(t) &&
-                (ev.offsetX - t.scrollLeft >= t.clientWidth ||
-                 ev.offsetY - t.scrollTop >= t.clientHeight);
+  let t = ev.target, d = document.documentElement;
+  if (t == d) t = document.scrollingElement;
+  if (t != document.scrollingElement)
+    return isScrollable(t) &&
+           (ev.offsetX - t.scrollLeft >= t.clientWidth ||
+            ev.offsetY - t.scrollTop >= t.clientHeight);
+  let c =
+    (d.scrollHeight == d.clientHeight && d.scrollHeight == d.offsetHeight)
+    // true => guessing it's a no doctype document
+      ? t : d;
+  return ev.offsetX - t.scrollLeft >= c.clientWidth
+      || ev.offsetY - t.scrollTop  >= c.clientHeight;
 }
 
 // Can the given element be scrolled on either axis?
@@ -103,9 +111,9 @@ function isScrollable(elt) {
 function findScrollables(elt) {
   let elts = [];
   while (true) {
-    if (elt == document.documentElement) elt = document.body;
+    if (elt == document.documentElement) elt = document.scrollingElement;
     if (elt == null) break;
-    if (elt == document.body) { elts.push(elt); break; }
+    if (elt == document.scrollingElement) { elts.push(elt); break; }
     if (isScrollable(elt)) elts.push(elt);
     elt = elt.parentNode;
   }
@@ -285,9 +293,9 @@ function onMouseDown(ev) {
     if (!ev.target) {
       debug("target is null, ignoring");
       break; }
-    if (ev.button != options.button) {
-      debug("wrong button, ignoring; ev.button=%s; options.button=%s",
-            ev.button, options.button);
+    if (ev.buttons != cOptions.buttons) {
+      debug("wrong buttons, ignoring; ev.buttons=%s; cOptions.buttons=%s",
+            ev.buttons, cOptions.buttons);
       break; }
     if (!KEYS.every(key => options[key] == ev[key])) {
       debug("wrong modkeys, ignoring");
@@ -306,6 +314,11 @@ function onMouseDown(ev) {
     if (ev.button == 2) blockContextMenu = true;
     break;
   //
+  case DRAG:
+    Motion.stop();
+    stopDrag(ev);
+    break;
+  //
   default:
     console.log("WARNING: illegal activity for mousedown:", activity);
     CoverDiv.hide();
@@ -321,13 +334,13 @@ function onMouseMove(ev) {
   case STOP: case GLIDE: break;
   //
   case DRAG:
-    if (ev.button != options.button) break;
+    if (ev.buttons != cOptions.buttons) break;
     updateDrag(ev);
     blockEvent(ev);
     break;
   //
   case CLICK:
-    if (ev.button != options.button) break;
+    if (ev.buttons != cOptions.buttons) break;
     if (vmag2(vsub(mouseOrigin,evPos(ev))) > 9) {
       if (options.button == 2) blockContextMenu = true;
       CoverDiv.show();
@@ -346,21 +359,17 @@ function onMouseUp(ev) {
   case STOP: break;
   //
   case CLICK:
-    debug("unclick, no drag");
+    debug("unclick, no drag: %o", ev.buttons);
     CoverDiv.hide();
     if (ev.button == 0) getSelection().removeAllRanges();
     if (ev.button == 2) blockContextMenu = false;
     if (document.activeElement) document.activeElement.blur();
     if (ev.target) ev.target.focus();
-    if (ev.button == options.button) activity = STOP;
+    activity = STOP;
     break;
   //
   case DRAG:
-    if (ev.button == options.button) { stopDrag(ev); blockEvent(ev); }
-    break;
-  //
-  case GLIDE:
-    stopGlide(ev);
+    if (ev.buttons != cOptions.buttons) { stopDrag(ev); blockEvent(ev); }
     break;
   //
   }

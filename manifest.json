@@ -1,6 +1,7 @@
 {
   "name": "Drag to Scroll",
-  "version": "1.0",
+  "short_name": "Drag2Scroll",
+  "version": "1.0.1",
   "description": "Drag the mouse to scroll the page.",
   "icons": {"128": "icon.png"},
   "content_scripts": [{
@@ -12,5 +13,5 @@
   "permissions": ["storage"],
   "options_page": "config.html",
   "manifest_version": 2,
-  "minimum_chrome_version": "49"
+  "minimum_chrome_version": "60"
 }

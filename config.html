@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <title>Drag to Scroll</title>
@@ -28,25 +29,23 @@
 <body>
 
 <table border="0" cellspacing="16"><tr>
-  <td>Mouse Button</td><td>
-    <select id="button">
-      <option>Left</option>
-      <option>Middle</option>
-      <option>Right</option>
-    </select><br>
+  <td>Mouse Button</td><td style="text-align: left;">
+    <input id="lButton" type="checkbox" /><label for="lButton">Left</label>
+    <input id="mButton" type="checkbox" /><label for="mButton">Middle</label>
+    <input id="rButton" type="checkbox" /><label for="rButton">Right</label>
     <input id="notext" type="checkbox" />
     <label for="notext" class="dependent">Don't drag on text</label>
   </td>
 </tr><tr>
-  <td>Modifier Keys</td><td>
+  <td>Modifier Keys</td><td style="text-align: left;">
     <input id="shiftKey" type="checkbox" /><label for="shiftKey">Shift</label>
-    <input id="ctrlKey" type="checkbox" /><label for="ctrlKey">Ctrl</label>
-    <input id="altKey" type="checkbox" /><label for="altKey">Alt</label>
-    <input id="metaKey" type="checkbox" /><label for="metaKey">Win/Meta</label>
+    <input id="ctrlKey"  type="checkbox" /><label for="ctrlKey">Ctrl</label>
+    <input id="altKey"   type="checkbox" /><label for="altKey">Alt</label>
+    <input id="metaKey"  type="checkbox" /><label for="metaKey">Meta</label>
     <div class="tip">(You can use disabled keys to prevent scrolling.)</div>
   </td>
 </tr><tr>
-  <td>Max Gliding Speed</td><td>
+  <td>Max Gliding Speed</td><td style="text-align: left;">
     <input id="speed" type="range" value="20000" min="0" max="40000"
            list="speeds" style="width: 100%;" />
     <datalist id="speeds">
@@ -54,7 +53,7 @@
     </datalist>
   </td>
 </tr><tr>
-  <td>Glide Friction</td><td>
+  <td>Glide Friction</td><td style="text-align: left;">
     <input id="friction" type="range" value="5" min="0" max="12" step="0.01"
            list="frictions" style="width: 100%;" />
     <datalist id="frictions">
@@ -63,9 +62,9 @@
     </datalist>
   </td>
 </tr><tr>
-  <td>Debugging</td><td>
+  <td>Debugging</td><td style="text-align: left;">
     <input id="debug" type="checkbox" />
-    <label for="debug">Debugging log in console</label>
+    <label for="debug">Dump log to console</label>
   </td>
 </tr></table>
 

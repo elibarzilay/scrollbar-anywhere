@@ -4,24 +4,22 @@ let getElt = document.getElementById.bind(document);
 
 function forallOptions(cb) {
   for (let k in options) {
-    let inp = getElt(k); if (!inp) continue; // in case of junk in settings
-    cb(k, inp);
+    let inp = getElt(k);
+    if (inp) cb(k, inp); // check in case of junk in settings
   }
 }
 
+let isBoolOpt = (o) => BOOLEAN_OPTS.indexOf(o) >= 0;
+
 function save() {
   forallOptions((k, inp) =>
-    options[k] = (BOOLEAN_OPTS.indexOf(k) >= 0)    ? inp.checked
-               : (inp.selectedIndex !== undefined) ? inp.selectedIndex
-               :                                     Number(inp.value));
+    options[k] = isBoolOpt(k) ? inp.checked : Number(inp.value));
   chrome.storage.sync.set({options});
 }
 
 function load() {
   forallOptions((k, inp) => {
-    if (BOOLEAN_OPTS.indexOf(k) >= 0)         inp.checked       = options[k];
-    else if (inp.selectedIndex !== undefined) inp.selectedIndex = options[k];
-    else                                      inp.value         = options[k];
+    if (isBoolOpt(k)) inp.checked = options[k]; else inp.value = options[k];
   });
 }
 
@@ -34,6 +32,9 @@ function onUpdate(ev) {
 
 function start() {
   forallOptions((k, inp) => inp.addEventListener("change", onUpdate, false));
+  let platform = (s) => navigator.platform.startsWith(s);
+  getElt("metaKey").nextSibling.innerHTML =
+    platform("Win") ? "&#x229E;" : platform("Mac") ? "&#x2318;" : "Meta";
   let text = ["<i>Here's a bunch of text to scroll:</i>", ""];
   let beers = 99;
   let bottles = (n, rest) =>
